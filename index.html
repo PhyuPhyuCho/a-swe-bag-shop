@@ -11,7 +11,12 @@
 <!-- PIN LOCK -->
 <div id="lockScreen" class="lock">
   <h2>🔐 Enter PIN</h2>
-  <input type="password" id="pinInput" placeholder="****"/>
+  <input type="password"
+       id="pinInput"
+       placeholder="****"
+       inputmode="numeric"
+       pattern="[0-9]*"
+       maxlength="4"/>
   <button onclick="unlock()">Unlock</button>
 </div>
 
@@ -32,7 +37,6 @@
   <input type="file" id="photo" accept="image/*"/>
   <input type="number" id="cost" placeholder="Cost (MMK)"/>
   <input type="number" id="price" placeholder="Sell Price (MMK)"/>
-  <input type="text" id="customer" placeholder="Customer name"/>
   <button onclick="addBag()">Save</button>
   <button onclick="goHome()">⬅ Back</button>
 </div>

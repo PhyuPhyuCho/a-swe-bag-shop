@@ -109,7 +109,20 @@ function renderList(filter = "all") {
 }
 
 function toggleSold(i) {
-  bags[i].sold = !bags[i].sold;
+  const bag = bags[i];
+
+  if (!bag.sold) {
+    const name = prompt("Customer name?");
+    if (!name) return;
+    bag.customer = name;
+    bag.sold = true;
+    bag.soldDate = new Date().toISOString();
+  } else {
+    bag.sold = false;
+    bag.customer = "";
+    bag.soldDate = null;
+  }
+
   localStorage.setItem("bags", JSON.stringify(bags));
   renderList();
 }
