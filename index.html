@@ -36,17 +36,23 @@
 <!-- ADD BAG -->
 <div id="add" class="page hidden">
   <h2>Add Bag</h2>
+
   <input type="file" id="photo" accept="image/*"/>
-  <input type="number"
+
+  <div class="form">
+    <input type="tel"
        id="cost"
        placeholder="Cost (MMK)"
        inputmode="numeric"
        pattern="[0-9]*"/>
-  <input type="number"
+
+    <input type="tel"
        id="price"
        placeholder="Sell Price (MMK)"
        inputmode="numeric"
        pattern="[0-9]*"/>
+    </div>
+
   <button onclick="addBag()">Save</button>
   <button onclick="goHome()">⬅ Back</button>
 </div>
