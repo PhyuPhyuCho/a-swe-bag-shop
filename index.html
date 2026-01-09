@@ -99,9 +99,28 @@
 <!-- SETTINGS -->
 <div id="settings" class="page hidden">
   <h2>Settings</h2>
-  <p>Currency: MMK</p>
+
+  <div class="card mini">
+    <p><b>Currency:</b> MMK</p>
+    <p><b>PIN:</b> <button onclick="changePin()">Change PIN</button></p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Export</h3>
+    <button onclick="exportCSV()">📄 Export CSV (Excel)</button>
+    <button onclick="exportPDF()">🖨 Export PDF</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Backup</h3>
+    <button onclick="backupJSON()">💾 Backup (JSON)</button>
+    <input type="file" id="restoreFile" accept="application/json">
+    <button onclick="restoreJSON()">♻️ Restore Backup</button>
+  </div>
+
   <button onclick="goHome()">⬅ Back</button>
 </div>
+
 
 <script src="app.js"></script>
 </body>

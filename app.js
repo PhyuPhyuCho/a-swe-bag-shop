@@ -285,3 +285,172 @@ showPage = function(id) {
     renderDashboard();
   }
 };
+/********************
+ * SETTINGS: PIN
+ ********************/
+function changePin() {
+  const oldPin = prompt("Enter current PIN");
+  if (oldPin !== PIN) return alert("Wrong PIN");
+
+  const newPin = prompt("New 4-digit PIN");
+  if (!newPin || newPin.length < 4) return alert("PIN must be 4 digits");
+
+  PIN = newPin;
+  localStorage.setItem("pin", PIN);
+  alert("✅ PIN updated");
+}
+
+/********************
+ * EXPORT: CSV (Excel)
+ ********************/
+function exportCSV() {
+  // header
+  const rows = [
+    ["BagID", "Cost(MMK)", "SellPrice(MMK)", "Profit(MMK)", "Sold", "SoldDate", "Customer"]
+  ];
+
+  bags.forEach(b => {
+    const profit = (Number(b.price || 0) - Number(b.cost || 0));
+    rows.push([
+      b.id,
+      b.cost,
+      b.price,
+      profit,
+      b.sold ? "YES" : "NO",
+      b.soldDate ? b.soldDate : "",
+      b.customer ? b.customer : ""
+    ]);
+  });
+
+  const csv = rows.map(r =>
+    r.map(x => `"${String(x ?? "").replaceAll('"', '""')}"`).join(",")
+  ).join("\n");
+
+  downloadFile(`a-swe-bag-shop_${new Date().toISOString().slice(0,10)}.csv`, csv, "text/csv");
+}
+
+/********************
+ * EXPORT: PDF (Print)
+ ********************/
+function exportPDF() {
+  // Simple: open a print-friendly window and print-to-PDF
+  const now = new Date().toISOString().slice(0,10);
+  const sold = bags.filter(b => b.sold);
+  const totalSales = sold.reduce((s,b)=>s+Number(b.price||0),0);
+  const totalCost  = sold.reduce((s,b)=>s+Number(b.cost||0),0);
+  const totalProfit = totalSales - totalCost;
+
+  const html = `
+    <html>
+    <head>
+      <title>A Swe Bag Shop Report</title>
+      <style>
+        body{font-family:system-ui;padding:20px;}
+        h1{color:#6b4eff;}
+        table{width:100%;border-collapse:collapse;margin-top:12px;}
+        th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left;}
+        th{background:#f7f3ff;}
+      </style>
+    </head>
+    <body>
+      <h1>👜 A Swe Bag Shop</h1>
+      <p><b>Date:</b> ${now}</p>
+      <p><b>Sold Bags:</b> ${sold.length}</p>
+      <p><b>Total Sales:</b> ${totalSales.toLocaleString()} MMK</p>
+      <p><b>Total Cost:</b> ${totalCost.toLocaleString()} MMK</p>
+      <p><b>Total Profit:</b> <span style="color:${totalProfit>=0?'green':'red'}">${totalProfit.toLocaleString()} MMK</span></p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>BagID</th><th>Cost</th><th>Sell</th><th>Profit</th><th>Sold Date</th><th>Customer</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sold.map(b=>{
+            const p = (Number(b.price||0)-Number(b.cost||0));
+            return `<tr>
+              <td>${b.id}</td>
+              <td>${Number(b.cost||0).toLocaleString()}</td>
+              <td>${Number(b.price||0).toLocaleString()}</td>
+              <td style="color:${p>=0?'green':'red'}">${p.toLocaleString()}</td>
+              <td>${b.soldDate ? b.soldDate.slice(0,10) : ""}</td>
+              <td>${b.customer || ""}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+
+      <script>
+        window.onload = () => window.print();
+      </script>
+    </body>
+    </html>
+  `;
+
+  const w = window.open("", "_blank");
+  w.document.write(html);
+  w.document.close();
+}
+
+/********************
+ * BACKUP: JSON
+ ********************/
+function backupJSON() {
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    pin: PIN,
+    bags
+  };
+  downloadFile(`a-swe-bag-shop_backup_${new Date().toISOString().slice(0,10)}.json`,
+               JSON.stringify(payload, null, 2),
+               "application/json");
+}
+
+function restoreJSON() {
+  const file = document.getElementById("restoreFile").files[0];
+  if (!file) return alert("Choose a backup file first");
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+
+      if (!data || !Array.isArray(data.bags)) {
+        return alert("Invalid backup file");
+      }
+
+      bags = data.bags;
+      localStorage.setItem("bags", JSON.stringify(bags));
+
+      if (data.pin) {
+        PIN = data.pin;
+        localStorage.setItem("pin", PIN);
+      }
+
+      alert("✅ Restored!");
+      showPage("home");
+    } catch (e) {
+      alert("Restore failed");
+    }
+  };
+  reader.readAsText(file);
+}
+
+/********************
+ * UTIL: download file
+ ********************/
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
