@@ -106,3 +106,20 @@ button {
   font-size: 16px;
   padding: 10px;
 }
+.tabs{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  margin: 10px 0 14px;
+}
+
+.tabs button{
+  background:#efe8ff;
+  color:#4b2fd6;
+  border: 1px solid #dbcfff;
+}
+
+.card.mini{
+  max-width: 360px;
+  margin: 0 auto 14px;
+}

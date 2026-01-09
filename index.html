@@ -73,9 +73,28 @@
 <!-- PROFIT -->
 <div id="profit" class="page hidden">
   <h2>Profit Dashboard</h2>
-  <div id="profitSummary"></div>
+
+  <div class="tabs">
+    <button onclick="setPeriod('today')">Today</button>
+    <button onclick="setPeriod('month')">Month</button>
+    <button onclick="setPeriod('year')">Year</button>
+  </div>
+
+  <div class="card mini">
+    <p>Sold Bags: <b id="soldCount">0</b></p>
+    <p>Total Sales: <b id="totalSales">0</b> MMK</p>
+    <p>Total Cost: <b id="totalCost">0</b> MMK</p>
+    <p>Total Profit: <b id="totalProfit">0</b> MMK</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Monthly Profit (This Year)</h3>
+    <canvas id="profitChart" width="320" height="180"></canvas>
+  </div>
+
   <button onclick="goHome()">⬅ Back</button>
 </div>
+
 
 <!-- SETTINGS -->
 <div id="settings" class="page hidden">
