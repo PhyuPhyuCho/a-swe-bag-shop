@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A Swe Bag Shop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>👜 A Swe Bag Shop</h1>
+
+<div class="card">
+  <h2>Add Bag</h2>
+
+  <input type="file" id="photo" accept="image/*">
+  <input type="number" id="cost" placeholder="Cost (MMK)">
+  <input type="number" id="price" placeholder="Sell Price (MMK)">
+
+  <button onclick="addBag()">Add Bag</button>
+</div>
+
+<div class="card">
+  <h2>Bag List</h2>
+  <ul id="bagList"></ul>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

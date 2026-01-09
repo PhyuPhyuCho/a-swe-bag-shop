@@ -1,0 +1,39 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #fff0f6;
+  padding: 16px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+button {
+  width: 100%;
+  background: #ff69b4;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+li {
+  margin-bottom: 6px;
+}

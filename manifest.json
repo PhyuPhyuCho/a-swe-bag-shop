@@ -1,0 +1,8 @@
+{
+  "name": "A Swe Bag Shop",
+  "short_name": "Bag Shop",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff0f6",
+  "theme_color": "#ff69b4"
+}
