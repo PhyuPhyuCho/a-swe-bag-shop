@@ -68,3 +68,28 @@ button {
   font-size: 18px;
   text-align: center;
 }
+/* Bag cards */
+#bagList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.bag-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.1);
+  overflow: hidden;
+  text-align: left;
+}
+
+.bag-card img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+}
+
+.bag-info {
+  padding: 10px;
+  font-size: 14px;
+}

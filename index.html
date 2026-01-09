@@ -40,7 +40,13 @@
 <!-- BAG LIST -->
 <div id="list" class="page hidden">
   <h2>Bag List</h2>
+
+  <button onclick="renderList('all')">All</button>
+  <button onclick="renderList('stock')">In Stock</button>
+  <button onclick="renderList('sold')">Sold</button>
+
   <div id="bagList"></div>
+
   <button onclick="goHome()">⬅ Back</button>
 </div>
 
