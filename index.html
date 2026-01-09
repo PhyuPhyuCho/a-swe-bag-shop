@@ -1,26 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>A Swe Bag Shop</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>A Swe Bag Shop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <h1>👜 A Swe Bag Shop</h1>
 
+<!-- SUMMARY -->
+<div class="card summary">
+  <button onclick="setView('today')">Today</button>
+  <button onclick="setView('month')">Month</button>
+  <button onclick="setView('year')">Year</button>
+
+  <p>Sold Bags: <b id="soldCount">0</b></p>
+  <p>Total Profit: 
+    <b id="totalProfit" class="profit">0 MMK</b>
+  </p>
+</div>
+
+<!-- ADD BAG -->
 <div class="card">
   <h2>Add Bag</h2>
-
   <input type="file" id="photo" accept="image/*">
   <input type="number" id="cost" placeholder="Cost (MMK)">
   <input type="number" id="price" placeholder="Sell Price (MMK)">
-
   <button onclick="addBag()">Add Bag</button>
 </div>
 
+<!-- FILTER -->
+<div class="card">
+  <button onclick="filterList('all')">All</button>
+  <button onclick="filterList('instock')">In Stock</button>
+  <button onclick="filterList('sold')">Sold</button>
+</div>
+
+<!-- LIST -->
 <div class="card">
   <h2>Bag List</h2>
   <ul id="bagList"></ul>
