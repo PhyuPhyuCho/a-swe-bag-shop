@@ -40,7 +40,6 @@ function addBag() {
   const photoInput = document.getElementById("photo");
   const cost = document.getElementById("cost").value;
   const price = document.getElementById("price").value;
-  const customer = document.getElementById("customer").value;
 
   if (!cost || !price) {
     alert("Fill cost & price");
@@ -51,18 +50,27 @@ function addBag() {
   reader.onload = () => {
     const bag = {
       id: nextId(),
-      photo: reader.result,
+      photo: reader.result || "",
       cost: Number(cost),
       price: Number(price),
-      customer,
       sold: false,
       date: new Date().toISOString()
     };
 
     bags.push(bag);
     localStorage.setItem("bags", JSON.stringify(bags));
-    alert("Saved");
-    showPage("home");
+
+    // ✅ UX feedback
+    alert("✅ Bag saved");
+
+    // reset form
+    photoInput.value = "";
+    document.getElementById("cost").value = "";
+    document.getElementById("price").value = "";
+
+    // go to list automatically
+    showPage("list");
+    renderList("all");
   };
 
   if (photoInput.files[0]) {

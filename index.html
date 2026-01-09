@@ -24,7 +24,10 @@
 <div id="home" class="page hidden">
   <h1>👜 A Swe Bag Shop</h1>
   <div class="grid">
-    <div class="card" onclick="showPage('add')">➕<span>Add Bag</span></div>
+    <div class="card" onclick="showPage('list'); renderList('all')">
+  👜<span>Bag List</span>
+</div>
+
     <div class="card" onclick="showPage('list')">👜<span>Bag List</span></div>
     <div class="card" onclick="showPage('profit')">📊<span>Profit</span></div>
     <div class="card" onclick="showPage('settings')">⚙️<span>Settings</span></div>
@@ -35,8 +38,16 @@
 <div id="add" class="page hidden">
   <h2>Add Bag</h2>
   <input type="file" id="photo" accept="image/*"/>
-  <input type="number" id="cost" placeholder="Cost (MMK)"/>
-  <input type="number" id="price" placeholder="Sell Price (MMK)"/>
+  <input type="number"
+       id="cost"
+       placeholder="Cost (MMK)"
+       inputmode="numeric"
+       pattern="[0-9]*"/>
+  <input type="number"
+       id="price"
+       placeholder="Sell Price (MMK)"
+       inputmode="numeric"
+       pattern="[0-9]*"/>
   <button onclick="addBag()">Save</button>
   <button onclick="goHome()">⬅ Back</button>
 </div>
