@@ -465,6 +465,26 @@ function openQtyModal({ title, maxQty, mode, onConfirm }) {
 
   const sel = document.getElementById("qtySelect");
   sel.innerHTML = "";
+  // ✅ Placeholder + options
+const ph = document.createElement("option");
+ph.value = "";
+ph.textContent = "Choose quantity...";
+ph.disabled = true;
+ph.selected = true;
+sel.appendChild(ph);
+
+for (let i = 1; i <= Number(maxQty); i++) {
+  const opt = document.createElement("option");
+  opt.value = String(i);
+  opt.textContent = String(i);
+  sel.appendChild(opt);
+}
+
+const optAll = document.createElement("option");
+optAll.value = "all";
+optAll.textContent = `All (${maxQty})`;
+sel.appendChild(optAll);
+    
 
   // options 1..maxQty
   for (let i = 1; i <= maxQty; i++) {
@@ -489,6 +509,13 @@ function openQtyModal({ title, maxQty, mode, onConfirm }) {
   }
 
   document.getElementById("qtyModal").classList.remove("hidden");
+  // ✅ iOS Safari auto-open prevent
+setTimeout(() => {
+  const sel = document.getElementById("qtySelect");
+  sel.blur();
+  if (document.activeElement) document.activeElement.blur();
+}, 0);
+
 }
 
 function closeQty(){
@@ -498,6 +525,8 @@ function closeQty(){
 
 function confirmQty(){
   const val = document.getElementById("qtySelect").value;
+if (!val) return alert("Please choose quantity");
+
   const qty = val === "all" ? "all" : Number(val);
 
   const extraVisible = !document.getElementById("qtyExtra").classList.contains("hidden");
