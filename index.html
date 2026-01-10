@@ -10,109 +10,71 @@
 
 <div id="home" class="page">
   <h1>👜 A Swe Bag Shop</h1>
-
   <div class="grid">
-    <div class="card" onclick="showPage('add')">➕<span>Add Item</span></div>
-    <div class="card" onclick="openList()">👜<span>Item List</span></div>
-    <div class="card" onclick="openProfit()">📊<span>Profit</span></div>
-    <div class="card" onclick="openDiscounts()">🏷️<span>Discounts</span></div>
+    <button onclick="showPage('add')">➕ Add Item</button>
+    <button onclick="openList()">📦 Bag List</button>
+    <button onclick="openDiscounts()">🏷️ Discounts</button>
+    <button onclick="openProfit()">📊 Profit</button>
   </div>
 </div>
 
-<!-- ADD ITEM -->
 <div id="add" class="page hidden">
   <h2>Add Item</h2>
-
   <input type="file" id="photo" accept="image/*"/>
-
-  <div class="form">
-    <input type="text" id="name" placeholder="Item name (e.g., Tote Purple)"/>
-
-    <!-- qty -->
-    <input type="tel" id="qty" placeholder="Quantity (e.g., 10)" inputmode="numeric" pattern="[0-9]*"/>
-
-    <!-- per unit -->
-    <input type="tel" id="cost" placeholder="Cost per 1 item (MMK)" inputmode="numeric" pattern="[0-9]*"/>
-    <input type="tel" id="price" placeholder="Sell per 1 item (MMK)" inputmode="numeric" pattern="[0-9]*"/>
-  </div>
-
+  <input type="text" id="name" placeholder="Item name (optional)"/>
+  <input type="tel" id="qty" placeholder="Quantity" inputmode="numeric"/>
+  <input type="tel" id="cost" placeholder="Cost per 1 (MMK)" inputmode="numeric"/>
+  <input type="tel" id="price" placeholder="Sell price per 1 (MMK)" inputmode="numeric"/>
   <button onclick="addItem()">Save</button>
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
-<!-- ITEM LIST -->
 <div id="list" class="page hidden">
-  <h2>Item List</h2>
-
-  <div class="tabs">
+  <h2>Bag List</h2>
+  <div class="filters">
     <button onclick="renderList('all')">All</button>
-    <button onclick="renderList('instock')">In Stock</button>
-    <button onclick="renderList('soldout')">Sold Out</button>
+    <button onclick="renderList('instock')">In-stock</button>
+    <button onclick="renderList('soldout')">Sold out</button>
   </div>
-
-  <div id="itemList"></div>
-
+  <div id="itemList" class="list"></div>
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
-<!-- PROFIT -->
+<div id="discounts" class="page hidden">
+  <h2>Discount Items</h2>
+  <div id="discountList" class="list"></div>
+  <button class="ghost" onclick="goHome()">⬅ Back</button>
+</div>
+
 <div id="profit" class="page hidden">
   <h2>Profit</h2>
-
   <div class="tabs">
     <button onclick="setPeriod('today')">Today</button>
     <button onclick="setPeriod('month')">Month</button>
     <button onclick="setPeriod('year')">Year</button>
   </div>
-
-  <div class="cardBox">
-    <div class="stat">
-      <div class="label">Sold Qty</div>
-      <div class="value" id="soldQty">0</div>
-    </div>
-    <div class="stat">
-      <div class="label">Revenue</div>
-      <div class="value" id="revenue">0</div>
-    </div>
-    <div class="stat">
-      <div class="label">Profit</div>
-      <div class="value" id="profitVal">0</div>
-    </div>
+  <div class="summary">
+    <div>Sold Qty: <b id="soldQty">0</b></div>
+    <div>Revenue: <b id="revenue">0</b> MMK</div>
+    <div>Profit: <b id="profitVal">0</b> MMK</div>
   </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 10px">Monthly Profit (This Year)</h3>
-    <canvas id="profitChart" width="320" height="180"></canvas>
-  </div>
-
+  <canvas id="profitChart" width="320" height="180"></canvas>
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
-<!-- DISCOUNTS -->
-<div id="discounts" class="page hidden">
-  <h2>Discount Items</h2>
-  <div id="discountList"></div>
-  <button class="ghost" onclick="goHome()">⬅ Back</button>
-</div>
+<!-- Qty Modal (Buttons Picker) -->
 <div id="qtyModal" class="modal hidden">
   <div class="modalBox">
     <h3 id="qtyTitle">Select quantity</h3>
-
-    <select id="qtySelect"></select>
-
     <div id="qtyExtra" class="hidden">
-      <input type="tel" id="discountPriceInput"
-             placeholder="Discount price per 1 (MMK)"
-             inputmode="numeric" pattern="[0-9]*">
+      <input type="tel" id="discountPriceInput" placeholder="Discount price per 1 (MMK)" inputmode="numeric"/>
     </div>
-
+    <div id="qtyGrid" class="qtyGrid"></div>
     <div class="rowBtns">
-      <button onclick="confirmQty()">Confirm</button>
-      <button class="ghost" onclick="closeQty()">Cancel</button>
+      <button onclick="closeQty()">Cancel</button>
     </div>
   </div>
 </div>
-
 
 <script src="app.js"></script>
 </body>
