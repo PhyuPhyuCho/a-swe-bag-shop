@@ -8,71 +8,56 @@
 </head>
 <body>
 
-<!-- PIN LOCK -->
-<div id="lockScreen" class="lock">
-  <h2>🔐 Enter PIN</h2>
-  <input type="password"
-       id="pinInput"
-       placeholder="****"
-       inputmode="numeric"
-       pattern="[0-9]*"
-       maxlength="4"/>
-  <button onclick="unlock()">Unlock</button>
-</div>
-
-<!-- HOME -->
-<div id="home" class="page hidden">
+<div id="home" class="page">
   <h1>👜 A Swe Bag Shop</h1>
+
   <div class="grid">
-    <div class="card" onclick="showPage('add')">➕<span>Add Bag</span></div>
-    <div class="card" onclick="showPage('list'); renderList('all')">
-  👜<span>Bag List</span>
-    </div>
-    <div class="card" onclick="showPage('profit')">📊<span>Profit</span></div>
-    <div class="card" onclick="showPage('settings')">⚙️<span>Settings</span></div>
+    <div class="card" onclick="showPage('add')">➕<span>Add Item</span></div>
+    <div class="card" onclick="openList()">👜<span>Item List</span></div>
+    <div class="card" onclick="openProfit()">📊<span>Profit</span></div>
+    <div class="card" onclick="openDiscounts()">🏷️<span>Discounts</span></div>
   </div>
 </div>
 
-<!-- ADD BAG -->
+<!-- ADD ITEM -->
 <div id="add" class="page hidden">
-  <h2>Add Bag</h2>
+  <h2>Add Item</h2>
 
   <input type="file" id="photo" accept="image/*"/>
 
   <div class="form">
-    <input type="tel"
-       id="cost"
-       placeholder="Cost (MMK)"
-       inputmode="numeric"
-       pattern="[0-9]*"/>
+    <input type="text" id="name" placeholder="Item name (e.g., Tote Purple)"/>
 
-    <input type="tel"
-       id="price"
-       placeholder="Sell Price (MMK)"
-       inputmode="numeric"
-       pattern="[0-9]*"/>
-    </div>
+    <!-- qty -->
+    <input type="tel" id="qty" placeholder="Quantity (e.g., 10)" inputmode="numeric" pattern="[0-9]*"/>
 
-  <button onclick="addBag()">Save</button>
-  <button onclick="goHome()">⬅ Back</button>
+    <!-- per unit -->
+    <input type="tel" id="cost" placeholder="Cost per 1 item (MMK)" inputmode="numeric" pattern="[0-9]*"/>
+    <input type="tel" id="price" placeholder="Sell per 1 item (MMK)" inputmode="numeric" pattern="[0-9]*"/>
+  </div>
+
+  <button onclick="addItem()">Save</button>
+  <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
-<!-- BAG LIST -->
+<!-- ITEM LIST -->
 <div id="list" class="page hidden">
-  <h2>Bag List</h2>
+  <h2>Item List</h2>
 
-  <button onclick="renderList('all')">All</button>
-  <button onclick="renderList('stock')">In Stock</button>
-  <button onclick="renderList('sold')">Sold</button>
+  <div class="tabs">
+    <button onclick="renderList('all')">All</button>
+    <button onclick="renderList('instock')">In Stock</button>
+    <button onclick="renderList('soldout')">Sold Out</button>
+  </div>
 
-  <div id="bagList"></div>
+  <div id="itemList"></div>
 
-  <button onclick="goHome()">⬅ Back</button>
+  <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
 <!-- PROFIT -->
 <div id="profit" class="page hidden">
-  <h2>Profit Dashboard</h2>
+  <h2>Profit</h2>
 
   <div class="tabs">
     <button onclick="setPeriod('today')">Today</button>
@@ -80,47 +65,35 @@
     <button onclick="setPeriod('year')">Year</button>
   </div>
 
-  <div class="card mini">
-    <p>Sold Bags: <b id="soldCount">0</b></p>
-    <p>Total Sales: <b id="totalSales">0</b> MMK</p>
-    <p>Total Cost: <b id="totalCost">0</b> MMK</p>
-    <p>Total Profit: <b id="totalProfit">0</b> MMK</p>
+  <div class="cardBox">
+    <div class="stat">
+      <div class="label">Sold Qty</div>
+      <div class="value" id="soldQty">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Revenue</div>
+      <div class="value" id="revenue">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Profit</div>
+      <div class="value" id="profitVal">0</div>
+    </div>
   </div>
 
   <div class="card">
-    <h3 style="margin-top:0">Monthly Profit (This Year)</h3>
+    <h3 style="margin:0 0 10px">Monthly Profit (This Year)</h3>
     <canvas id="profitChart" width="320" height="180"></canvas>
   </div>
 
-  <button onclick="goHome()">⬅ Back</button>
+  <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
-
-<!-- SETTINGS -->
-<div id="settings" class="page hidden">
-  <h2>Settings</h2>
-
-  <div class="card mini">
-    <p><b>Currency:</b> MMK</p>
-    <p><b>PIN:</b> <button onclick="changePin()">Change PIN</button></p>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0">Export</h3>
-    <button onclick="exportCSV()">📄 Export CSV (Excel)</button>
-    <button onclick="exportPDF()">🖨 Export PDF</button>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0">Backup</h3>
-    <button onclick="backupJSON()">💾 Backup (JSON)</button>
-    <input type="file" id="restoreFile" accept="application/json">
-    <button onclick="restoreJSON()">♻️ Restore Backup</button>
-  </div>
-
-  <button onclick="goHome()">⬅ Back</button>
+<!-- DISCOUNTS -->
+<div id="discounts" class="page hidden">
+  <h2>Discount Items</h2>
+  <div id="discountList"></div>
+  <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
-
 
 <script src="app.js"></script>
 </body>

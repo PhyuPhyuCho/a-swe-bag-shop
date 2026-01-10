@@ -1,456 +1,364 @@
 /********************
- * PIN
+ * STORAGE
  ********************/
-let PIN = localStorage.getItem("pin") || "1234";
+let items = JSON.parse(localStorage.getItem("items") || "[]"); 
+let sales = JSON.parse(localStorage.getItem("sales") || "[]"); 
+// sale: {ts, itemId, qty, unitPrice, unitCost, discountType, discountValue, totalRevenue, totalProfit}
 
-function unlock() {
-  const val = document.getElementById("pinInput").value;
-  if (val === PIN) {
-    document.getElementById("lockScreen").style.display = "none";
-    showPage("home");
-  } else {
-    alert("Wrong PIN");
-  }
+let period = "today";
+let currentFilter = "all";
+
+function saveAll(){
+  localStorage.setItem("items", JSON.stringify(items));
+  localStorage.setItem("sales", JSON.stringify(sales));
 }
 
 /********************
- * NAVIGATION
+ * NAV
  ********************/
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
-function goHome() {
-  showPage("home");
+function goHome(){ showPage("home"); }
+
+function openList(){
+  showPage("list");
+  renderList("all");
+}
+function openProfit(){
+  showPage("profit");
+  renderDashboard();
+}
+function openDiscounts(){
+  showPage("discounts");
+  renderDiscounts();
 }
 
 /********************
- * BAG DATA (Local)
+ * HELPERS
  ********************/
-let bags = JSON.parse(localStorage.getItem("bags") || "[]");
-
-function nextId() {
-  return "B" + String(bags.length + 1).padStart(3, "0");
+function fmt(n){ return (n||0).toLocaleString("en-US"); }
+function nextId(){
+  // stable id for items
+  const n = items.length + 1;
+  return "I" + String(n).padStart(3, "0");
 }
+function sameDay(a,b){ return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth() && a.getDate()==b.getDate(); }
+function sameMonth(a,b){ return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth(); }
+function sameYear(a,b){ return a.getFullYear()==b.getFullYear(); }
 
 /********************
- * ADD BAG
+ * ADD ITEM (Inventory)
  ********************/
-function addBag() {
-  const photoInput = document.getElementById("photo");
-  const cost = document.getElementById("cost").value;
-  const price = document.getElementById("price").value;
+function addItem(){
+  const file = document.getElementById("photo").files[0];
+  const name = (document.getElementById("name").value || "").trim();
+  const qty  = Number(document.getElementById("qty").value);
+  const cost = Number(document.getElementById("cost").value);
+  const price= Number(document.getElementById("price").value);
 
-  if (!cost || !price) {
-    alert("Fill cost & price");
-    return;
-  }
+  if(!name) return alert("Enter item name");
+  if(!qty || qty < 0) return alert("Enter quantity");
+  if(!cost) return alert("Enter cost");
+  if(!price) return alert("Enter sell price");
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    const bag = {
+  const commit = (photoData) => {
+    items.push({
       id: nextId(),
-      photo: reader.result || "",
-      cost: Number(cost),
-      price: Number(price),
-      sold: false,
-      date: new Date().toISOString()
-    };
-
-    bags.push(bag);
-    localStorage.setItem("bags", JSON.stringify(bags));
-
-    // ✅ UX feedback
-    alert("✅ Bag saved");
-
-    // reset form
-    photoInput.value = "";
+      name,
+      qty,
+      cost,      // per unit
+      price,     // per unit
+      photo: photoData || "",
+      createdAt: new Date().toISOString()
+    });
+    saveAll();
+    alert("✅ Saved");
+    // reset
+    document.getElementById("photo").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("qty").value = "";
     document.getElementById("cost").value = "";
     document.getElementById("price").value = "";
-
-    // go to list automatically
+    // go list
     showPage("list");
     renderList("all");
   };
 
-  if (photoInput.files[0]) {
-    reader.readAsDataURL(photoInput.files[0]);
+  if(file){
+    const r = new FileReader();
+    r.onload = () => commit(r.result);
+    r.readAsDataURL(file);
   } else {
-    reader.onload();
+    commit("");
   }
 }
 
 /********************
- * BAG LIST
+ * LIST
  ********************/
-function renderList(filter = "all") {
-  const wrap = document.getElementById("bagList");
+function renderList(filter){
+  currentFilter = filter || "all";
+  const wrap = document.getElementById("itemList");
   wrap.innerHTML = "";
 
-  bags
-    .filter(b =>
-      filter === "all" ||
-      (filter === "sold" && b.sold) ||
-      (filter === "stock" && !b.sold)
-    )
-    .forEach((b, i) => {
-      const profit = b.price - b.cost;
-      wrap.innerHTML += `
-        <div class="bag-card">
-          ${b.photo ? `<img src="${b.photo}">` : ""}
-          <div class="bag-info">
-            <b>${b.id}</b>
-            <div>Cost: ${b.cost} MMK</div>
-            <div>Price: ${b.price} MMK</div>
-            <div style="color:${profit>=0?'green':'red'}">
-              Profit: ${profit} MMK
-            </div>
-            <label>
-              <input type="checkbox" ${b.sold?"checked":""}
-                onchange="toggleSold(${i})">
-              Sold
-            </label>
-          </div>
-        </div>
-      `;
-    });
-}
-
-function toggleSold(i) {
-  const bag = bags[i];
-
-  if (!bag.sold) {
-    const name = prompt("Customer name?");
-    if (!name) return;
-    bag.customer = name;
-    bag.sold = true;
-    bag.soldDate = new Date().toISOString();
-  } else {
-    bag.sold = false;
-    bag.customer = "";
-    bag.soldDate = null;
-  }
-
-  localStorage.setItem("bags", JSON.stringify(bags));
-  renderList();
-}
-/********************
- * DASHBOARD: Today/Month/Year + Chart
- ********************/
-let period = "today";
-
-function setPeriod(p) {
-  period = p;
-  renderDashboard();
-}
-
-function fmt(n) {
-  return (n || 0).toLocaleString("en-US");
-}
-
-function sameDay(a, b) {
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth() === b.getMonth() &&
-         a.getDate() === b.getDate();
-}
-
-function inSameMonth(a, b) {
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth() === b.getMonth();
-}
-
-function inSameYear(a, b) {
-  return a.getFullYear() === b.getFullYear();
-}
-
-function renderDashboard() {
-  // only sold bags count toward profit
-  const now = new Date();
-  let soldCount = 0;
-  let totalSales = 0;
-  let totalCost = 0;
-
-  bags.forEach(b => {
-    if (!b.sold) return;
-
-    // use soldDate if exists, else fallback to date
-    const d = new Date(b.soldDate || b.date);
-
-    const ok =
-      (period === "today" && sameDay(d, now)) ||
-      (period === "month" && inSameMonth(d, now)) ||
-      (period === "year" && inSameYear(d, now));
-
-    if (!ok) return;
-
-    soldCount += 1;
-    totalSales += Number(b.price || 0);
-    totalCost += Number(b.cost || 0);
+  const view = items.filter(it=>{
+    if(currentFilter==="instock") return it.qty > 0;
+    if(currentFilter==="soldout") return it.qty <= 0;
+    return true;
   });
 
-  const profit = totalSales - totalCost;
-
-  const soldEl = document.getElementById("soldCount");
-  const salesEl = document.getElementById("totalSales");
-  const costEl = document.getElementById("totalCost");
-  const profitEl = document.getElementById("totalProfit");
-
-  if (soldEl) soldEl.textContent = fmt(soldCount);
-  if (salesEl) salesEl.textContent = fmt(totalSales);
-  if (costEl) costEl.textContent = fmt(totalCost);
-  if (profitEl) {
-    profitEl.textContent = fmt(profit);
-    profitEl.style.color = profit >= 0 ? "green" : "red";
+  if(view.length === 0){
+    wrap.innerHTML = `<div style="grid-column:1/-1;color:#666;">No items yet.</div>`;
+    return;
   }
+
+  view.forEach(it=>{
+    const unitProfit = Number(it.price) - Number(it.cost);
+    wrap.innerHTML += `
+      <div class="itemCard">
+        ${it.photo ? `<img src="${it.photo}" alt="">` : `<div style="aspect-ratio:1/1;background:#efe8ff;"></div>`}
+        <div class="itemInfo">
+          <div class="itemTop">
+            <div>
+              <b>${it.name}</b><br>
+              <span class="badge">${it.id}</span>
+            </div>
+            <div class="qtyBig">${fmt(it.qty)}</div>
+          </div>
+
+          <div style="margin-top:8px">
+            Unit Cost: ${fmt(it.cost)} MMK<br>
+            Unit Sell: ${fmt(it.price)} MMK<br>
+            <span style="color:${unitProfit>=0?'green':'red'}">Unit Profit: ${fmt(unitProfit)} MMK</span>
+          </div>
+
+          <div class="rowBtns">
+            <button onclick="sellItem('${it.id}')">Sell</button>
+            <button class="ghost" onclick="restockItem('${it.id}')">+Stock</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/********************
+ * RESTOCK
+ ********************/
+function restockItem(itemId){
+  const it = items.find(x=>x.id===itemId);
+  if(!it) return;
+
+  const q = prompt("Add how many items to stock?");
+  if(q===null) return;
+  const add = Number(q);
+  if(!add || add < 0) return alert("Invalid quantity");
+
+  it.qty += add;
+  saveAll();
+  renderList(currentFilter);
+}
+
+/********************
+ * SELL FLOW (Qty + optional discount)
+ ********************/
+function sellItem(itemId){
+  const it = items.find(x=>x.id===itemId);
+  if(!it) return;
+
+  if(it.qty <= 0) return alert("Sold out!");
+
+  const qStr = prompt(`How many sold? (In stock: ${it.qty})`);
+  if(qStr===null) return;
+  const qtySold = Number(qStr);
+  if(!qtySold || qtySold < 1) return alert("Invalid qty");
+  if(qtySold > it.qty) return alert("Not enough stock");
+
+  // discount choice
+  // type: none / percent / amount
+  const dType = prompt("Discount? Type: none / percent / amount", "none");
+  if(dType===null) return;
+
+  let discountType = "none";
+  let discountValue = 0;
+
+  if(dType.toLowerCase()==="percent"){
+    const p = prompt("Discount percent (e.g., 10 for 10%)", "10");
+    if(p===null) return;
+    discountType = "percent";
+    discountValue = Number(p) || 0;
+  } else if(dType.toLowerCase()==="amount"){
+    const a = prompt("Discount amount per 1 item (MMK)", "1000");
+    if(a===null) return;
+    discountType = "amount";
+    discountValue = Number(a) || 0;
+  } else {
+    discountType = "none";
+    discountValue = 0;
+  }
+
+  const unitCost  = Number(it.cost);
+  const unitPrice = Number(it.price);
+
+  let finalUnitPrice = unitPrice;
+  if(discountType==="percent"){
+    finalUnitPrice = Math.max(0, Math.round(unitPrice * (1 - (discountValue/100))));
+  } else if(discountType==="amount"){
+    finalUnitPrice = Math.max(0, unitPrice - discountValue);
+  }
+
+  const totalRevenue = finalUnitPrice * qtySold;
+  const totalProfit  = (finalUnitPrice - unitCost) * qtySold;
+
+  // update stock
+  it.qty -= qtySold;
+
+  // record sale
+  sales.push({
+    ts: new Date().toISOString(),
+    itemId: it.id,
+    itemName: it.name,
+    qty: qtySold,
+    unitPrice,
+    unitCost,
+    discountType,
+    discountValue,
+    finalUnitPrice,
+    totalRevenue,
+    totalProfit
+  });
+
+  saveAll();
+  alert(`✅ Sold ${qtySold} item(s)\nRevenue: ${fmt(totalRevenue)} MMK`);
+  renderList(currentFilter);
+}
+
+/********************
+ * DISCOUNT PAGE
+ ********************/
+function renderDiscounts(){
+  const wrap = document.getElementById("discountList");
+  wrap.innerHTML = "";
+
+  const discounted = sales.filter(s => s.discountType !== "none" && (s.discountValue||0) > 0);
+
+  if(discounted.length === 0){
+    wrap.innerHTML = `<div style="grid-column:1/-1;color:#666;">No discounted sales yet.</div>`;
+    return;
+  }
+
+  // newest first
+  discounted.slice().reverse().forEach(s=>{
+    const badge = s.discountType==="percent"
+      ? `-${s.discountValue}%`
+      : `-${fmt(s.discountValue)} MMK`;
+    wrap.innerHTML += `
+      <div class="itemCard">
+        <div style="padding:12px">
+          <b>${s.itemName}</b> <span class="badge">${s.itemId}</span><br>
+          <div style="margin-top:8px">
+            Sold Qty: <b>${fmt(s.qty)}</b><br>
+            Discount: <b>${badge}</b><br>
+            Final unit: <b>${fmt(s.finalUnitPrice)} MMK</b><br>
+            Revenue: <b>${fmt(s.totalRevenue)} MMK</b><br>
+            Profit: <b style="color:${s.totalProfit>=0?'green':'red'}">${fmt(s.totalProfit)} MMK</b><br>
+            Date: ${s.ts.slice(0,10)}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/********************
+ * PROFIT DASHBOARD + CHART
+ ********************/
+function setPeriod(p){ period = p; renderDashboard(); }
+
+function renderDashboard(){
+  const now = new Date();
+  let soldQty = 0;
+  let revenue = 0;
+  let profit  = 0;
+
+  sales.forEach(s=>{
+    const d = new Date(s.ts);
+    const ok =
+      (period==="today" && sameDay(d, now)) ||
+      (period==="month" && sameMonth(d, now)) ||
+      (period==="year" && sameYear(d, now));
+    if(!ok) return;
+
+    soldQty += Number(s.qty||0);
+    revenue += Number(s.totalRevenue||0);
+    profit  += Number(s.totalProfit||0);
+  });
+
+  document.getElementById("soldQty").textContent = fmt(soldQty);
+  document.getElementById("revenue").textContent = fmt(revenue);
+  const pEl = document.getElementById("profitVal");
+  pEl.textContent = fmt(profit);
+  pEl.style.color = profit>=0 ? "green" : "red";
 
   drawMonthlyProfitChart();
 }
 
-function drawMonthlyProfitChart() {
+function drawMonthlyProfitChart(){
   const canvas = document.getElementById("profitChart");
-  if (!canvas) return;
+  if(!canvas) return;
 
   const ctx = canvas.getContext("2d");
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
 
-  // compute profit per month for current year
   const now = new Date();
   const year = now.getFullYear();
   const profits = Array(12).fill(0);
 
-  bags.forEach(b => {
-    if (!b.sold) return;
-    const d = new Date(b.soldDate || b.date);
-    if (d.getFullYear() !== year) return;
-
-    const m = d.getMonth();
-    profits[m] += (Number(b.price || 0) - Number(b.cost || 0));
+  sales.forEach(s=>{
+    const d = new Date(s.ts);
+    if(d.getFullYear() !== year) return;
+    profits[d.getMonth()] += Number(s.totalProfit||0);
   });
 
-  // draw background
-  ctx.clearRect(0, 0, w, h);
-
-  // chart area
   const pad = 22;
-  const chartW = w - pad * 2;
-  const chartH = h - pad * 2;
-
-  // scale
-  const maxAbs = Math.max(1, ...profits.map(x => Math.abs(x)));
-  const zeroY = pad + chartH / 2; // center baseline
+  const chartW = w - pad*2;
+  const chartH = h - pad*2;
+  const maxAbs = Math.max(1, ...profits.map(v=>Math.abs(v)));
+  const zeroY = pad + chartH/2;
 
   // axes
   ctx.beginPath();
   ctx.moveTo(pad, pad);
-  ctx.lineTo(pad, h - pad);
-  ctx.lineTo(w - pad, h - pad);
+  ctx.lineTo(pad, h-pad);
+  ctx.lineTo(w-pad, h-pad);
   ctx.stroke();
 
-  // baseline (0)
+  // baseline
   ctx.beginPath();
   ctx.moveTo(pad, zeroY);
-  ctx.lineTo(w - pad, zeroY);
+  ctx.lineTo(w-pad, zeroY);
   ctx.stroke();
 
-  const barW = chartW / 12 * 0.6;
-  const gap = chartW / 12;
+  const gap = chartW/12;
+  const barW = gap*0.6;
 
-  for (let i = 0; i < 12; i++) {
-    const x = pad + i * gap + (gap - barW) / 2;
+  for(let i=0;i<12;i++){
     const v = profits[i];
-    const barH = (Math.abs(v) / maxAbs) * (chartH / 2 - 8);
+    const barH = (Math.abs(v)/maxAbs) * (chartH/2 - 8);
+    const x = pad + i*gap + (gap-barW)/2;
+    const y = v>=0 ? (zeroY-barH) : zeroY;
 
-    const y = v >= 0 ? (zeroY - barH) : zeroY;
-    const height = barH;
+    ctx.fillStyle = v>=0 ? "green" : "red";
+    ctx.fillRect(x, y, barW, barH);
 
-    // bar (no fixed color request—use green/red only for sign)
-    ctx.fillStyle = v >= 0 ? "green" : "red";
-    ctx.fillRect(x, y, barW, height);
-
-    // month label (1..12)
-    ctx.fillStyle = "#333";
-    ctx.font = "10px system-ui";
-    ctx.fillText(String(i + 1), x + barW / 2 - 3, h - 6);
+    ctx.fillStyle="#333";
+    ctx.font="10px system-ui";
+    ctx.fillText(String(i+1), x+barW/2-3, h-6);
   }
 }
 
-/********************
- * Hook: when opening Profit page
- ********************/
-const _oldShowPage = showPage;
-showPage = function(id) {
-  _oldShowPage(id);
-  if (id === "profit") {
-    renderDashboard();
-  }
-};
-/********************
- * SETTINGS: PIN
- ********************/
-function changePin() {
-  const oldPin = prompt("Enter current PIN");
-  if (oldPin !== PIN) return alert("Wrong PIN");
-
-  const newPin = prompt("New 4-digit PIN");
-  if (!newPin || newPin.length < 4) return alert("PIN must be 4 digits");
-
-  PIN = newPin;
-  localStorage.setItem("pin", PIN);
-  alert("✅ PIN updated");
-}
-
-/********************
- * EXPORT: CSV (Excel)
- ********************/
-function exportCSV() {
-  // header
-  const rows = [
-    ["BagID", "Cost(MMK)", "SellPrice(MMK)", "Profit(MMK)", "Sold", "SoldDate", "Customer"]
-  ];
-
-  bags.forEach(b => {
-    const profit = (Number(b.price || 0) - Number(b.cost || 0));
-    rows.push([
-      b.id,
-      b.cost,
-      b.price,
-      profit,
-      b.sold ? "YES" : "NO",
-      b.soldDate ? b.soldDate : "",
-      b.customer ? b.customer : ""
-    ]);
-  });
-
-  const csv = rows.map(r =>
-    r.map(x => `"${String(x ?? "").replaceAll('"', '""')}"`).join(",")
-  ).join("\n");
-
-  downloadFile(`a-swe-bag-shop_${new Date().toISOString().slice(0,10)}.csv`, csv, "text/csv");
-}
-
-/********************
- * EXPORT: PDF (Print)
- ********************/
-function exportPDF() {
-  // Simple: open a print-friendly window and print-to-PDF
-  const now = new Date().toISOString().slice(0,10);
-  const sold = bags.filter(b => b.sold);
-  const totalSales = sold.reduce((s,b)=>s+Number(b.price||0),0);
-  const totalCost  = sold.reduce((s,b)=>s+Number(b.cost||0),0);
-  const totalProfit = totalSales - totalCost;
-
-  const html = `
-    <html>
-    <head>
-      <title>A Swe Bag Shop Report</title>
-      <style>
-        body{font-family:system-ui;padding:20px;}
-        h1{color:#6b4eff;}
-        table{width:100%;border-collapse:collapse;margin-top:12px;}
-        th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left;}
-        th{background:#f7f3ff;}
-      </style>
-    </head>
-    <body>
-      <h1>👜 A Swe Bag Shop</h1>
-      <p><b>Date:</b> ${now}</p>
-      <p><b>Sold Bags:</b> ${sold.length}</p>
-      <p><b>Total Sales:</b> ${totalSales.toLocaleString()} MMK</p>
-      <p><b>Total Cost:</b> ${totalCost.toLocaleString()} MMK</p>
-      <p><b>Total Profit:</b> <span style="color:${totalProfit>=0?'green':'red'}">${totalProfit.toLocaleString()} MMK</span></p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>BagID</th><th>Cost</th><th>Sell</th><th>Profit</th><th>Sold Date</th><th>Customer</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sold.map(b=>{
-            const p = (Number(b.price||0)-Number(b.cost||0));
-            return `<tr>
-              <td>${b.id}</td>
-              <td>${Number(b.cost||0).toLocaleString()}</td>
-              <td>${Number(b.price||0).toLocaleString()}</td>
-              <td style="color:${p>=0?'green':'red'}">${p.toLocaleString()}</td>
-              <td>${b.soldDate ? b.soldDate.slice(0,10) : ""}</td>
-              <td>${b.customer || ""}</td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>
-
-      <script>
-        window.onload = () => window.print();
-      </script>
-    </body>
-    </html>
-  `;
-
-  const w = window.open("", "_blank");
-  w.document.write(html);
-  w.document.close();
-}
-
-/********************
- * BACKUP: JSON
- ********************/
-function backupJSON() {
-  const payload = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    pin: PIN,
-    bags
-  };
-  downloadFile(`a-swe-bag-shop_backup_${new Date().toISOString().slice(0,10)}.json`,
-               JSON.stringify(payload, null, 2),
-               "application/json");
-}
-
-function restoreJSON() {
-  const file = document.getElementById("restoreFile").files[0];
-  if (!file) return alert("Choose a backup file first");
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-
-      if (!data || !Array.isArray(data.bags)) {
-        return alert("Invalid backup file");
-      }
-
-      bags = data.bags;
-      localStorage.setItem("bags", JSON.stringify(bags));
-
-      if (data.pin) {
-        PIN = data.pin;
-        localStorage.setItem("pin", PIN);
-      }
-
-      alert("✅ Restored!");
-      showPage("home");
-    } catch (e) {
-      alert("Restore failed");
-    }
-  };
-  reader.readAsText(file);
-}
-
-/********************
- * UTIL: download file
- ********************/
-function downloadFile(filename, content, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  URL.revokeObjectURL(url);
-}
+// initial
+showPage("home");
