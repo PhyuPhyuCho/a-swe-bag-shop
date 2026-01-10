@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>A Swe Bag Shop</title>
-  <link rel="stylesheet" href="style.css?v=20260111_1"/>
+  <link rel="stylesheet" href="style.css?v=20260111_2"/>
 </head>
 <body>
 
@@ -15,16 +15,23 @@
   <h1>👜 A Swe Bag Shop</h1>
   <div class="grid">
     <button onclick="showPage('add')">➕ Add Item</button>
-    <button onclick="openList()">📦 Bag List</button>
+    <button onclick="openList('bag')">👜 Bag List</button>
+    <button onclick="openList('clothes')">👗 Clothes List</button>
     <button onclick="openDiscounts()">🏷️ Discounts</button>
     <button onclick="openProfit()">📊 Profit</button>
   </div>
-  <div class="tiny">Build: 20260111_1</div>
+  <div class="tiny">Build: 20260111_2</div>
 </div>
 
 <div id="add" class="page hidden">
   <h2>Add Item</h2>
   <input type="file" id="photo" accept="image/*"/>
+
+  <select id="category">
+    <option value="bag" selected>Bag</option>
+    <option value="clothes">Clothes</option>
+  </select>
+
   <input type="text" id="name" placeholder="Item name (optional)"/>
   <input type="tel" id="qty" placeholder="Quantity" inputmode="numeric" pattern="[0-9]*"/>
   <input type="tel" id="cost" placeholder="Cost per 1 (MMK)" inputmode="numeric" pattern="[0-9]*"/>
@@ -34,7 +41,7 @@
 </div>
 
 <div id="list" class="page hidden">
-  <h2>Bag List</h2>
+  <h2 id="listTitle">List</h2>
   <div class="filters">
     <button onclick="renderList('all')">All</button>
     <button onclick="renderList('instock')">In-stock</button>
@@ -46,6 +53,7 @@
 
 <div id="discounts" class="page hidden">
   <h2>Discount Items</h2>
+  <div class="small" style="text-align:center;margin-bottom:6px">Discount items can be Bags or Clothes.</div>
   <div id="discountList" class="list"></div>
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
@@ -63,6 +71,10 @@
     <div>Profit: <b id="profitVal">0</b> MMK</div>
   </div>
   <canvas id="profitChart" width="320" height="180"></canvas>
+
+  <h3 class="subhead">Daily breakdown</h3>
+  <div id="dailyList" class="dailyList"></div>
+
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
 
@@ -80,6 +92,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260111_1"></script>
+<script src="app.js?v=20260111_2"></script>
 </body>
 </html>

@@ -1,14 +1,21 @@
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto}
 .hidden{display:none !important;}
 .modal.hidden{display:none !important;}
+
 body{margin:0;padding:16px;background:#f7f4ff;color:#222}
 h1,h2{text-align:center;color:#6b4eff}
+.subhead{margin:14px 0 8px;text-align:center;color:#6b4eff}
 .tiny{text-align:center;font-size:12px;color:#777;margin-top:10px}
+.small{font-size:12px;color:#666;font-weight:600}
+
 .page.hidden{display:none}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+
 button{padding:14px;border:none;border-radius:16px;background:#6b4eff;color:#fff;font-weight:800}
 button.ghost{background:#eee;color:#333}
-input{width:100%;padding:12px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px;font-size:16px}
+
+input,select{width:100%;padding:12px;border-radius:14px;border:1px solid #ddd;margin-bottom:10px;font-size:16px;background:#fff}
+
 .list{display:grid;grid-template-columns:1fr;gap:12px}
 .itemCard{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.08)}
 .itemCard img{width:100%;aspect-ratio:1/1;object-fit:cover}
@@ -16,12 +23,21 @@ input{width:100%;padding:12px;border-radius:14px;border:1px solid #ddd;margin-bo
 .itemTop{display:flex;justify-content:space-between;align-items:center}
 .qtyBig{font-size:28px;font-weight:900;color:#6b4eff}
 .badge{background:#eee;border-radius:999px;padding:4px 8px;font-size:12px;margin-right:6px}
-.rowBtns{display:flex;gap:8px;margin-top:10px}
+.rowBtns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
 .filters,.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
 .summary{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:10px}
+
+/* Modal */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}
 .modalBox{width:100%;max-width:420px;background:#fff;border-radius:18px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.18)}
 .qtyGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 12px}
 .qtyBtn{background:#efe8ff;border:1px solid #dbcfff;color:#4b2fd6;padding:12px 0;border-radius:14px;font-size:16px;font-weight:800}
 .qtyBtn.primary{background:#6b4eff;border:none;color:#fff}
 .discountTag{display:inline-block;background:#ffe6f2;color:#b4236a;padding:4px 8px;border-radius:999px;font-size:12px;margin-left:6px}
+
+/* Daily breakdown */
+.dailyList{display:grid;gap:8px;margin-top:10px}
+.dayRow{background:#fff;border-radius:14px;padding:10px 12px;box-shadow:0 4px 12px rgba(0,0,0,.06);display:flex;justify-content:space-between;gap:10px}
+.dayLeft{font-weight:900}
+.dayRight{text-align:right}
