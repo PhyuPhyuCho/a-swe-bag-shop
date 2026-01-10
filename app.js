@@ -3,7 +3,7 @@
  ********************/
 let items = JSON.parse(localStorage.getItem("items") || "[]"); 
 let sales = JSON.parse(localStorage.getItem("sales") || "[]"); 
-// sale: {ts, itemId, qty, unitPrice, unitCost, discountType, discountValue, totalRevenue, totalProfit}
+// sale: {ts, itemId, itemName, qty, unitPrice, unitCost, totalRevenue, totalProfit, saleType: "normal"|"discount"}
 
 let period = "today";
 let currentFilter = "all";
@@ -39,11 +39,21 @@ function openDiscounts(){
  * HELPERS
  ********************/
 function fmt(n){ return (n||0).toLocaleString("en-US"); }
-function nextId(){
-  // stable id for items
+function nextItemId(){
   const n = items.length + 1;
   return "I" + String(n).padStart(3, "0");
 }
+function nextDiscountId(){
+  // find max D###
+  const ds = items.filter(x=>x.discounted).map(x=>x.id);
+  let max = 0;
+  ds.forEach(id=>{
+    const num = Number(String(id).replace("D","")) || 0;
+    if(num>max) max=num;
+  });
+  return "D" + String(max + 1).padStart(3, "0");
+}
+
 function sameDay(a,b){ return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth() && a.getDate()==b.getDate(); }
 function sameMonth(a,b){ return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth(); }
 function sameYear(a,b){ return a.getFullYear()==b.getFullYear(); }
@@ -65,23 +75,23 @@ function addItem(){
 
   const commit = (photoData) => {
     items.push({
-      id: nextId(),
+      id: nextItemId(),
       name,
       qty,
       cost,      // per unit
       price,     // per unit
       photo: photoData || "",
+      discounted: false,
+      parentId: null,
       createdAt: new Date().toISOString()
     });
     saveAll();
     alert("✅ Saved");
-    // reset
     document.getElementById("photo").value = "";
     document.getElementById("name").value = "";
     document.getElementById("qty").value = "";
     document.getElementById("cost").value = "";
     document.getElementById("price").value = "";
-    // go list
     showPage("list");
     renderList("all");
   };
@@ -103,7 +113,10 @@ function renderList(filter){
   const wrap = document.getElementById("itemList");
   wrap.innerHTML = "";
 
-  const view = items.filter(it=>{
+  // show ONLY normal items here (discounted shown in Discount page)
+  const normalItems = items.filter(x => !x.discounted);
+
+  const view = normalItems.filter(it=>{
     if(currentFilter==="instock") return it.qty > 0;
     if(currentFilter==="soldout") return it.qty <= 0;
     return true;
@@ -135,8 +148,8 @@ function renderList(filter){
           </div>
 
           <div class="rowBtns">
-            <button onclick="sellItem('${it.id}')">Sell</button>
-            <button class="ghost" onclick="restockItem('${it.id}')">+Stock</button>
+            <button onclick="sellNormal('${it.id}')">Sell</button>
+            <button class="ghost" onclick="discountSplit('${it.id}')">Discount</button>
           </div>
         </div>
       </div>
@@ -145,77 +158,28 @@ function renderList(filter){
 }
 
 /********************
- * RESTOCK
+ * NORMAL SELL (NO DISCOUNT QUESTIONS)
  ********************/
-function restockItem(itemId){
-  const it = items.find(x=>x.id===itemId);
+function sellNormal(itemId){
+  const it = items.find(x=>x.id===itemId && !x.discounted);
   if(!it) return;
-
-  const q = prompt("Add how many items to stock?");
-  if(q===null) return;
-  const add = Number(q);
-  if(!add || add < 0) return alert("Invalid quantity");
-
-  it.qty += add;
-  saveAll();
-  renderList(currentFilter);
-}
-
-/********************
- * SELL FLOW (Qty + optional discount)
- ********************/
-function sellItem(itemId){
-  const it = items.find(x=>x.id===itemId);
-  if(!it) return;
-
   if(it.qty <= 0) return alert("Sold out!");
 
   const qStr = prompt(`How many sold? (In stock: ${it.qty})`);
   if(qStr===null) return;
+
   const qtySold = Number(qStr);
   if(!qtySold || qtySold < 1) return alert("Invalid qty");
   if(qtySold > it.qty) return alert("Not enough stock");
 
-  // discount choice
-  // type: none / percent / amount
-  const dType = prompt("Discount? Type: none / percent / amount", "none");
-  if(dType===null) return;
-
-  let discountType = "none";
-  let discountValue = 0;
-
-  if(dType.toLowerCase()==="percent"){
-    const p = prompt("Discount percent (e.g., 10 for 10%)", "10");
-    if(p===null) return;
-    discountType = "percent";
-    discountValue = Number(p) || 0;
-  } else if(dType.toLowerCase()==="amount"){
-    const a = prompt("Discount amount per 1 item (MMK)", "1000");
-    if(a===null) return;
-    discountType = "amount";
-    discountValue = Number(a) || 0;
-  } else {
-    discountType = "none";
-    discountValue = 0;
-  }
-
   const unitCost  = Number(it.cost);
   const unitPrice = Number(it.price);
 
-  let finalUnitPrice = unitPrice;
-  if(discountType==="percent"){
-    finalUnitPrice = Math.max(0, Math.round(unitPrice * (1 - (discountValue/100))));
-  } else if(discountType==="amount"){
-    finalUnitPrice = Math.max(0, unitPrice - discountValue);
-  }
+  const totalRevenue = unitPrice * qtySold;
+  const totalProfit  = (unitPrice - unitCost) * qtySold;
 
-  const totalRevenue = finalUnitPrice * qtySold;
-  const totalProfit  = (finalUnitPrice - unitCost) * qtySold;
-
-  // update stock
   it.qty -= qtySold;
 
-  // record sale
   sales.push({
     ts: new Date().toISOString(),
     itemId: it.id,
@@ -223,16 +187,66 @@ function sellItem(itemId){
     qty: qtySold,
     unitPrice,
     unitCost,
-    discountType,
-    discountValue,
-    finalUnitPrice,
     totalRevenue,
-    totalProfit
+    totalProfit,
+    saleType: "normal"
   });
 
   saveAll();
-  alert(`✅ Sold ${qtySold} item(s)\nRevenue: ${fmt(totalRevenue)} MMK`);
+  alert(`✅ Sold ${qtySold}\nRevenue: ${fmt(totalRevenue)} MMK`);
   renderList(currentFilter);
+}
+
+/********************
+ * DISCOUNT SPLIT (create discounted stock)
+ ********************/
+function discountSplit(itemId){
+  const it = items.find(x=>x.id===itemId && !x.discounted);
+  if(!it) return;
+  if(it.qty <= 0) return alert("No stock to discount");
+
+  const priceStr = prompt("Discount price per 1 item (MMK)", String(it.price));
+  if(priceStr===null) return;
+  const discountPrice = Number(priceStr);
+  if(!discountPrice && discountPrice !== 0) return alert("Invalid price");
+  if(discountPrice >= it.price) {
+    const ok = confirm("Discount price is not lower than normal price. Continue?");
+    if(!ok) return;
+  }
+
+  const qtyMode = prompt(`Discount quantity? Type: all / number (In stock: ${it.qty})`, "all");
+  if(qtyMode===null) return;
+
+  let qtyToDiscount = 0;
+  if(qtyMode.toLowerCase() === "all"){
+    qtyToDiscount = it.qty;
+  } else {
+    qtyToDiscount = Number(qtyMode);
+    if(!qtyToDiscount || qtyToDiscount < 1) return alert("Invalid qty");
+    if(qtyToDiscount > it.qty) return alert("Not enough stock");
+  }
+
+  // reduce normal stock
+  it.qty -= qtyToDiscount;
+
+  // create discounted item
+  const did = nextDiscountId();
+  items.push({
+    id: did,
+    parentId: it.id,
+    name: it.name,
+    qty: qtyToDiscount,
+    cost: Number(it.cost),
+    price: discountPrice,
+    photo: it.photo || "",
+    discounted: true,
+    createdAt: new Date().toISOString()
+  });
+
+  saveAll();
+  alert("🏷️ Discount applied");
+  showPage("discounts");
+  renderDiscounts();
 }
 
 /********************
@@ -242,34 +256,115 @@ function renderDiscounts(){
   const wrap = document.getElementById("discountList");
   wrap.innerHTML = "";
 
-  const discounted = sales.filter(s => s.discountType !== "none" && (s.discountValue||0) > 0);
+  const discItems = items.filter(x=>x.discounted);
 
-  if(discounted.length === 0){
-    wrap.innerHTML = `<div style="grid-column:1/-1;color:#666;">No discounted sales yet.</div>`;
+  if(discItems.length === 0){
+    wrap.innerHTML = `<div style="grid-column:1/-1;color:#666;">No discount items yet.</div>`;
     return;
   }
 
-  // newest first
-  discounted.slice().reverse().forEach(s=>{
-    const badge = s.discountType==="percent"
-      ? `-${s.discountValue}%`
-      : `-${fmt(s.discountValue)} MMK`;
+  discItems.forEach(it=>{
+    const parent = items.find(x=>x.id===it.parentId && !x.discounted);
+    const normalPrice = parent ? parent.price : null;
+    const unitProfit = Number(it.price) - Number(it.cost);
+
     wrap.innerHTML += `
       <div class="itemCard">
-        <div style="padding:12px">
-          <b>${s.itemName}</b> <span class="badge">${s.itemId}</span><br>
+        ${it.photo ? `<img src="${it.photo}" alt="">` : `<div style="aspect-ratio:1/1;background:#efe8ff;"></div>`}
+        <div class="itemInfo">
+          <div class="itemTop">
+            <div>
+              <b>${it.name}</b>
+              <span class="discountTag">DISCOUNT</span><br>
+              <span class="badge">${it.id}</span>
+              ${it.parentId ? `<span class="badge">from ${it.parentId}</span>` : ""}
+            </div>
+            <div class="qtyBig">${fmt(it.qty)}</div>
+          </div>
+
           <div style="margin-top:8px">
-            Sold Qty: <b>${fmt(s.qty)}</b><br>
-            Discount: <b>${badge}</b><br>
-            Final unit: <b>${fmt(s.finalUnitPrice)} MMK</b><br>
-            Revenue: <b>${fmt(s.totalRevenue)} MMK</b><br>
-            Profit: <b style="color:${s.totalProfit>=0?'green':'red'}">${fmt(s.totalProfit)} MMK</b><br>
-            Date: ${s.ts.slice(0,10)}
+            ${normalPrice!=null ? `Normal: <span class="strike">${fmt(normalPrice)} MMK</span><br>` : ""}
+            Discount: <b>${fmt(it.price)} MMK</b><br>
+            Cost: ${fmt(it.cost)} MMK<br>
+            <span style="color:${unitProfit>=0?'green':'red'}">Unit Profit: ${fmt(unitProfit)} MMK</span>
+          </div>
+
+          <div class="rowBtns">
+            <button onclick="sellDiscount('${it.id}')">Sell</button>
+            <button class="ghost" onclick="removeDiscount('${it.id}')">Remove</button>
           </div>
         </div>
       </div>
     `;
   });
+}
+
+/********************
+ * SELL DISCOUNT ITEM
+ ********************/
+function sellDiscount(discountId){
+  const it = items.find(x=>x.id===discountId && x.discounted);
+  if(!it) return;
+  if(it.qty <= 0) return alert("Sold out!");
+
+  const qStr = prompt(`How many sold? (In stock: ${it.qty})`);
+  if(qStr===null) return;
+
+  const qtySold = Number(qStr);
+  if(!qtySold || qtySold < 1) return alert("Invalid qty");
+  if(qtySold > it.qty) return alert("Not enough stock");
+
+  const unitCost  = Number(it.cost);
+  const unitPrice = Number(it.price);
+
+  const totalRevenue = unitPrice * qtySold;
+  const totalProfit  = (unitPrice - unitCost) * qtySold;
+
+  it.qty -= qtySold;
+
+  sales.push({
+    ts: new Date().toISOString(),
+    itemId: it.id,
+    itemName: it.name + " (Discount)",
+    qty: qtySold,
+    unitPrice,
+    unitCost,
+    totalRevenue,
+    totalProfit,
+    saleType: "discount"
+  });
+
+  saveAll();
+  alert(`✅ Discount sold ${qtySold}\nRevenue: ${fmt(totalRevenue)} MMK`);
+  renderDiscounts();
+}
+
+/********************
+ * REMOVE DISCOUNT (move stock back to parent)
+ ********************/
+function removeDiscount(discountId){
+  const it = items.find(x=>x.id===discountId && x.discounted);
+  if(!it) return;
+
+  const parent = items.find(x=>x.id===it.parentId && !x.discounted);
+  if(!parent){
+    const ok = confirm("Parent item not found. Delete discount item anyway?");
+    if(!ok) return;
+    // delete only
+    items = items.filter(x=>x.id!==discountId);
+    saveAll();
+    renderDiscounts();
+    return;
+  }
+
+  parent.qty += it.qty;
+
+  // delete discount item
+  items = items.filter(x=>x.id!==discountId);
+
+  saveAll();
+  alert("✅ Discount removed (stock returned)");
+  renderDiscounts();
 }
 
 /********************
@@ -296,11 +391,15 @@ function renderDashboard(){
     profit  += Number(s.totalProfit||0);
   });
 
-  document.getElementById("soldQty").textContent = fmt(soldQty);
-  document.getElementById("revenue").textContent = fmt(revenue);
-  const pEl = document.getElementById("profitVal");
-  pEl.textContent = fmt(profit);
-  pEl.style.color = profit>=0 ? "green" : "red";
+  const sq = document.getElementById("soldQty");
+  const rv = document.getElementById("revenue");
+  const pv = document.getElementById("profitVal");
+  if(sq) sq.textContent = fmt(soldQty);
+  if(rv) rv.textContent = fmt(revenue);
+  if(pv){
+    pv.textContent = fmt(profit);
+    pv.style.color = profit>=0 ? "green" : "red";
+  }
 
   drawMonthlyProfitChart();
 }
@@ -360,5 +459,5 @@ function drawMonthlyProfitChart(){
   }
 }
 
-// initial
+// start
 showPage("home");
