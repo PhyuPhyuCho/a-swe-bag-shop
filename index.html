@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>A Swe Bag Shop</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css?v=20260111_1"/>
 </head>
 <body>
 
@@ -16,15 +19,16 @@
     <button onclick="openDiscounts()">🏷️ Discounts</button>
     <button onclick="openProfit()">📊 Profit</button>
   </div>
+  <div class="tiny">Build: 20260111_1</div>
 </div>
 
 <div id="add" class="page hidden">
   <h2>Add Item</h2>
   <input type="file" id="photo" accept="image/*"/>
   <input type="text" id="name" placeholder="Item name (optional)"/>
-  <input type="tel" id="qty" placeholder="Quantity" inputmode="numeric"/>
-  <input type="tel" id="cost" placeholder="Cost per 1 (MMK)" inputmode="numeric"/>
-  <input type="tel" id="price" placeholder="Sell price per 1 (MMK)" inputmode="numeric"/>
+  <input type="tel" id="qty" placeholder="Quantity" inputmode="numeric" pattern="[0-9]*"/>
+  <input type="tel" id="cost" placeholder="Cost per 1 (MMK)" inputmode="numeric" pattern="[0-9]*"/>
+  <input type="tel" id="price" placeholder="Sell price per 1 (MMK)" inputmode="numeric" pattern="[0-9]*"/>
   <button onclick="addItem()">Save</button>
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
@@ -67,7 +71,7 @@
   <div class="modalBox">
     <h3 id="qtyTitle">Select quantity</h3>
     <div id="qtyExtra" class="hidden">
-      <input type="tel" id="discountPriceInput" placeholder="Discount price per 1 (MMK)" inputmode="numeric"/>
+      <input type="tel" id="discountPriceInput" placeholder="Discount price per 1 (MMK)" inputmode="numeric" pattern="[0-9]*"/>
     </div>
     <div id="qtyGrid" class="qtyGrid"></div>
     <div class="rowBtns">
@@ -76,6 +80,6 @@
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=20260111_1"></script>
 </body>
 </html>
