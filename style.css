@@ -24,3 +24,4 @@ input{width:100%;padding:12px;border-radius:14px;border:1px solid #ddd;margin-bo
 .qtyBtn.primary{background:#6b4eff;border:none;color:#fff}
 .discountTag{display:inline-block;background:#ffe6f2;color:#b4236a;padding:4px 8px;border-radius:999px;font-size:12px;margin-left:6px}
 .hidden{display:none !important;}
+.modal.hidden{display:none !important;}
