@@ -68,7 +68,8 @@ function addItem(){
   const cost = Number(document.getElementById("cost").value);
   const price= Number(document.getElementById("price").value);
 
-  if(!name) return alert("Enter item name");
+    let name = (document.getElementById("name").value || "").trim();
+    if(!name) name = `Item ${nextItemId()}`;
   if(!qty || qty < 0) return alert("Enter quantity");
   if(!cost) return alert("Enter cost");
   if(!price) return alert("Enter sell price");
@@ -165,36 +166,38 @@ function sellNormal(itemId){
   if(!it) return;
   if(it.qty <= 0) return alert("Sold out!");
 
-  const qStr = prompt(`How many sold? (In stock: ${it.qty})`);
-  if(qStr===null) return;
+  openQtyModal({
+    title: `Sell quantity (In stock: ${it.qty})`,
+    maxQty: it.qty,
+    mode: "sell",
+    onConfirm: ({ qty }) => {
+      const qtySold = (qty === "all") ? it.qty : qty;
+      const unitCost  = Number(it.cost);
+      const unitPrice = Number(it.price);
 
-  const qtySold = Number(qStr);
-  if(!qtySold || qtySold < 1) return alert("Invalid qty");
-  if(qtySold > it.qty) return alert("Not enough stock");
+      const totalRevenue = unitPrice * qtySold;
+      const totalProfit  = (unitPrice - unitCost) * qtySold;
 
-  const unitCost  = Number(it.cost);
-  const unitPrice = Number(it.price);
+      it.qty -= qtySold;
 
-  const totalRevenue = unitPrice * qtySold;
-  const totalProfit  = (unitPrice - unitCost) * qtySold;
+      sales.push({
+        ts: new Date().toISOString(),
+        itemId: it.id,
+        itemName: it.name,
+        qty: qtySold,
+        unitPrice,
+        unitCost,
+        totalRevenue,
+        totalProfit,
+        saleType: "normal"
+      });
 
-  it.qty -= qtySold;
-
-  sales.push({
-    ts: new Date().toISOString(),
-    itemId: it.id,
-    itemName: it.name,
-    qty: qtySold,
-    unitPrice,
-    unitCost,
-    totalRevenue,
-    totalProfit,
-    saleType: "normal"
+      saveAll();
+      alert(`✅ Sold ${qtySold}\nRevenue: ${fmt(totalRevenue)} MMK`);
+      renderList(currentFilter);
+      renderDashboard();
+    }
   });
-
-  saveAll();
-  alert(`✅ Sold ${qtySold}\nRevenue: ${fmt(totalRevenue)} MMK`);
-  renderList(currentFilter);
 }
 
 /********************
@@ -205,48 +208,37 @@ function discountSplit(itemId){
   if(!it) return;
   if(it.qty <= 0) return alert("No stock to discount");
 
-  const priceStr = prompt("Discount price per 1 item (MMK)", String(it.price));
-  if(priceStr===null) return;
-  const discountPrice = Number(priceStr);
-  if(!discountPrice && discountPrice !== 0) return alert("Invalid price");
-  if(discountPrice >= it.price) {
-    const ok = confirm("Discount price is not lower than normal price. Continue?");
-    if(!ok) return;
-  }
+  openQtyModal({
+    title: `Discount qty (In stock: ${it.qty})`,
+    maxQty: it.qty,
+    mode: "discount",
+    onConfirm: ({ qty, discountPrice }) => {
+      const qtyToDiscount = (qty === "all") ? it.qty : qty;
 
-  const qtyMode = prompt(`Discount quantity? Type: all / number (In stock: ${it.qty})`, "all");
-  if(qtyMode===null) return;
+      // reduce normal stock
+      it.qty -= qtyToDiscount;
 
-  let qtyToDiscount = 0;
-  if(qtyMode.toLowerCase() === "all"){
-    qtyToDiscount = it.qty;
-  } else {
-    qtyToDiscount = Number(qtyMode);
-    if(!qtyToDiscount || qtyToDiscount < 1) return alert("Invalid qty");
-    if(qtyToDiscount > it.qty) return alert("Not enough stock");
-  }
+      // create discounted item
+      const did = nextDiscountId();
+      items.push({
+        id: did,
+        parentId: it.id,
+        name: it.name || `Item ${it.id}`,
+        qty: qtyToDiscount,
+        cost: Number(it.cost),
+        price: Number(discountPrice),
+        photo: it.photo || "",
+        discounted: true,
+        createdAt: new Date().toISOString()
+      });
 
-  // reduce normal stock
-  it.qty -= qtyToDiscount;
-
-  // create discounted item
-  const did = nextDiscountId();
-  items.push({
-    id: did,
-    parentId: it.id,
-    name: it.name,
-    qty: qtyToDiscount,
-    cost: Number(it.cost),
-    price: discountPrice,
-    photo: it.photo || "",
-    discounted: true,
-    createdAt: new Date().toISOString()
+      saveAll();
+      alert("🏷️ Discount applied");
+      showPage("discounts");
+      renderDiscounts();
+      renderDashboard();
+    }
   });
-
-  saveAll();
-  alert("🏷️ Discount applied");
-  showPage("discounts");
-  renderDiscounts();
 }
 
 /********************
@@ -307,36 +299,39 @@ function sellDiscount(discountId){
   if(!it) return;
   if(it.qty <= 0) return alert("Sold out!");
 
-  const qStr = prompt(`How many sold? (In stock: ${it.qty})`);
-  if(qStr===null) return;
+  openQtyModal({
+    title: `Sell discount qty (In stock: ${it.qty})`,
+    maxQty: it.qty,
+    mode: "sell",
+    onConfirm: ({ qty }) => {
+      const qtySold = (qty === "all") ? it.qty : qty;
 
-  const qtySold = Number(qStr);
-  if(!qtySold || qtySold < 1) return alert("Invalid qty");
-  if(qtySold > it.qty) return alert("Not enough stock");
+      const unitCost  = Number(it.cost);
+      const unitPrice = Number(it.price);
 
-  const unitCost  = Number(it.cost);
-  const unitPrice = Number(it.price);
+      const totalRevenue = unitPrice * qtySold;
+      const totalProfit  = (unitPrice - unitCost) * qtySold;
 
-  const totalRevenue = unitPrice * qtySold;
-  const totalProfit  = (unitPrice - unitCost) * qtySold;
+      it.qty -= qtySold;
 
-  it.qty -= qtySold;
+      sales.push({
+        ts: new Date().toISOString(),
+        itemId: it.id,
+        itemName: (it.name || it.id) + " (Discount)",
+        qty: qtySold,
+        unitPrice,
+        unitCost,
+        totalRevenue,
+        totalProfit,
+        saleType: "discount"
+      });
 
-  sales.push({
-    ts: new Date().toISOString(),
-    itemId: it.id,
-    itemName: it.name + " (Discount)",
-    qty: qtySold,
-    unitPrice,
-    unitCost,
-    totalRevenue,
-    totalProfit,
-    saleType: "discount"
+      saveAll();
+      alert(`✅ Discount sold ${qtySold}\nRevenue: ${fmt(totalRevenue)} MMK`);
+      renderDiscounts();
+      renderDashboard();
+    }
   });
-
-  saveAll();
-  alert(`✅ Discount sold ${qtySold}\nRevenue: ${fmt(totalRevenue)} MMK`);
-  renderDiscounts();
 }
 
 /********************
@@ -461,3 +456,57 @@ function drawMonthlyProfitChart(){
 
 // start
 showPage("home");
+let pendingAction = null;
+
+function openQtyModal({ title, maxQty, mode, onConfirm }) {
+  pendingAction = onConfirm;
+
+  document.getElementById("qtyTitle").textContent = title;
+
+  const sel = document.getElementById("qtySelect");
+  sel.innerHTML = "";
+
+  // options 1..maxQty
+  for (let i = 1; i <= maxQty; i++) {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = String(i);
+    sel.appendChild(opt);
+  }
+  // add All option
+  const optAll = document.createElement("option");
+  optAll.value = "all";
+  optAll.textContent = `All (${maxQty})`;
+  sel.appendChild(optAll);
+
+  // discount price input show/hide
+  const extra = document.getElementById("qtyExtra");
+  extra.classList.toggle("hidden", mode !== "discount");
+
+  // numeric keypad for discount price
+  if (mode === "discount") {
+    document.getElementById("discountPriceInput").value = "";
+  }
+
+  document.getElementById("qtyModal").classList.remove("hidden");
+}
+
+function closeQty(){
+  document.getElementById("qtyModal").classList.add("hidden");
+  pendingAction = null;
+}
+
+function confirmQty(){
+  const val = document.getElementById("qtySelect").value;
+  const qty = val === "all" ? "all" : Number(val);
+
+  const extraVisible = !document.getElementById("qtyExtra").classList.contains("hidden");
+  let discountPrice = null;
+  if (extraVisible) {
+    discountPrice = Number(document.getElementById("discountPriceInput").value);
+    if (!discountPrice && discountPrice !== 0) return alert("Enter discount price");
+  }
+
+  closeQty();
+  if (pendingAction) pendingAction({ qty, discountPrice });
+}

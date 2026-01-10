@@ -94,6 +94,24 @@
   <div id="discountList"></div>
   <button class="ghost" onclick="goHome()">⬅ Back</button>
 </div>
+<div id="qtyModal" class="modal hidden">
+  <div class="modalBox">
+    <h3 id="qtyTitle">Select quantity</h3>
+
+    <select id="qtySelect"></select>
+
+    <div id="qtyExtra" class="hidden">
+      <input type="tel" id="discountPriceInput"
+             placeholder="Discount price per 1 (MMK)"
+             inputmode="numeric" pattern="[0-9]*">
+    </div>
+
+    <div class="rowBtns">
+      <button onclick="confirmQty()">Confirm</button>
+      <button class="ghost" onclick="closeQty()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 
 <script src="app.js"></script>

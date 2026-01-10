@@ -162,3 +162,26 @@ button.ghost{
   text-decoration: line-through;
   color:#777;
 }
+.modal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.35);
+  display:flex; align-items:center; justify-content:center;
+  padding:18px;
+}
+.modalBox{
+  width:100%; max-width:420px;
+  background:#fff;
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+  text-align:left;
+}
+.modalBox h3{ margin:6px 0 12px; color:#6b4eff; }
+.modalBox select, .modalBox input{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #ddd;
+  font-size:16px;
+  margin-bottom:12px;
+}
