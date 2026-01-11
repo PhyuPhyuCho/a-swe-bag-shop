@@ -15,20 +15,33 @@ function saveAll(){
   localStorage.setItem("sales", JSON.stringify(sales));
 }
 
-// Nav
+// FAB + navigation
+function setFab(enabled){
+  document.body.classList.toggle('showFab', !!enabled);
+}
+
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+
+  const fabPages = ['list','discounts','profit'];
+  setFab(fabPages.includes(id));
+
+  window.scrollTo({top:0, behavior:'smooth'});
 }
+
 function goHome(){ showPage('home'); }
 
 function openList(cat){
   currentCategory = cat || 'bag';
   const title = (currentCategory==='clothes') ? 'Clothes List' : 'Bag List';
+  const hint  = (currentCategory==='clothes') ? 'Clothes inventory' : 'Bag inventory';
   document.getElementById('listTitle').textContent = title;
+  document.getElementById('listHint').textContent  = hint;
   showPage('list');
   renderList('all');
 }
+
 function openProfit(){
   showPage('profit');
   renderDashboard();
@@ -59,7 +72,6 @@ function addItem(){
   if(!cost && cost !== 0) return alert('Enter cost');
   if(!price && price !== 0) return alert('Enter sell price');
 
-  // stable global id
   const allNormal = items.filter(x=>!x.discounted);
   const id = 'I' + String(allNormal.length+1).padStart(3,'0');
 
@@ -76,11 +88,13 @@ function addItem(){
     });
     saveAll();
     alert('Saved ✅');
+
     document.getElementById('photo').value='';
     document.getElementById('name').value='';
     document.getElementById('qty').value='';
     document.getElementById('cost').value='';
     document.getElementById('price').value='';
+
     openList(category);
   };
 
@@ -117,16 +131,18 @@ function renderList(filter){
     const unitProfit = it.price - it.cost;
     wrap.innerHTML += `
       <div class="itemCard">
-        ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:#efe8ff"></div>`}
+        ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:rgba(107,78,255,.12)"></div>`}
         <div class="itemInfo">
           <div class="itemTop">
-            <div><b>${it.name}</b><br><span class="badge">${it.id}</span></div>
+            <div>
+              <div style="font-weight:900">${it.name}</div>
+              <span class="badge">${it.id}</span>
+            </div>
             <div class="qtyBig">${fmt(it.qty)}</div>
           </div>
-          <div style="margin-top:6px">
-            Unit Cost: ${fmt(it.cost)}<br>
-            Unit Sell: ${fmt(it.price)}<br>
-            <span style="color:${unitProfit>=0?'green':'red'}">Unit Profit: ${fmt(unitProfit)}</span>
+          <div style="margin-top:6px" class="small">
+            Unit Cost: <b>${fmt(it.cost)}</b> • Unit Sell: <b>${fmt(it.price)}</b><br>
+            <span style="color:${unitProfit>=0?'green':'red'};font-weight:900">Unit Profit: ${fmt(unitProfit)}</span>
           </div>
           <div class="rowBtns">
             <button onclick="sellNormal('${it.id}')">Sell</button>
@@ -138,7 +154,7 @@ function renderList(filter){
   });
 }
 
-// Qty modal (buttons picker)
+// Qty modal
 let pendingAction=null;
 
 function openQtyModal({title,maxQty,mode,onConfirm}){
@@ -192,7 +208,6 @@ function closeQty(){
   pendingAction = null;
 }
 
-// ✅ FIX: keep callback before closeQty clears it
 function confirmQty(qty){
   let discountPrice = null;
 
@@ -292,16 +307,18 @@ function renderDiscounts(){
 
     wrap.innerHTML += `
       <div class="itemCard">
-        ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:#efe8ff"></div>`}
+        ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:rgba(107,78,255,.12)"></div>`}
         <div class="itemInfo">
           <div class="itemTop">
-            <div><b>${catTag} ${it.name}</b><span class="discountTag">DISCOUNT</span></div>
+            <div>
+              <div style="font-weight:900">${catTag} ${it.name}<span class="discountTag">DISCOUNT</span></div>
+              <span class="badge">${it.id}</span>
+            </div>
             <div class="qtyBig">${fmt(it.qty)}</div>
           </div>
-          <div>
-            Discount: <b>${fmt(it.price)}</b><br>
-            Cost: ${fmt(it.cost)}<br>
-            <span style="color:${unitProfit>=0?'green':'red'}">Unit Profit: ${fmt(unitProfit)}</span>
+          <div class="small" style="margin-top:6px">
+            Discount: <b>${fmt(it.price)}</b> • Cost: <b>${fmt(it.cost)}</b><br>
+            <span style="color:${unitProfit>=0?'green':'red'};font-weight:900">Unit Profit: ${fmt(unitProfit)}</span>
           </div>
           <div class="rowBtns">
             <button onclick="sellDiscount('${it.id}')">Sell</button>
@@ -422,7 +439,7 @@ function renderDailyBreakdown(){
   const box=document.getElementById('dailyList');
   if(!box) return;
 
-  const map={}; // date -> {qty, rev, prof}
+  const map={};
   sales.forEach(s=>{
     const d=new Date(s.ts);
     if(!inPeriod(d)) return;
@@ -459,4 +476,5 @@ function renderDailyBreakdown(){
   }).join('');
 }
 
+// init
 showPage('home');
