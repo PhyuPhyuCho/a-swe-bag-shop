@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20260111_6"/>
+  <link rel="stylesheet" href="style.css?v=20260111_7b"/>
 </head>
 <body>
 
@@ -21,7 +21,7 @@
     <div class="logo">👜</div>
     <div>
       <div class="brandTitle">A Swe Bag Shop</div>
-      <div class="brandSub">Bag & Clothes tracker</div>
+      <div class="brandSub">Cute inventory & profit 💜</div>
     </div>
   </div>
   <button class="iconBtn" onclick="goHome()" aria-label="Home">🏠</button>
@@ -30,7 +30,7 @@
 <div id="home" class="page">
   <div class="hero">
     <div class="heroTitle">Cute inventory & profit tracker 💜</div>
-    <div class="heroHint">Add items → Sell → Discount → See profit</div>
+    <div class="heroHint">Add → Sell → Discount → Profit</div>
   </div>
 
   <div class="grid">
@@ -60,7 +60,7 @@
     </button>
   </div>
 
-  <div class="tiny">Build: 20260111_6</div>
+  <div class="tiny">Build: 20260111_7b</div>
 </div>
 
 <div id="add" class="page hidden">
@@ -85,16 +85,16 @@
     <div class="row2">
       <div>
         <label class="label">Quantity</label>
-        <input type="tel" id="qty" placeholder="0" inputmode="numeric" pattern="[0-9]*"/>
+        <input type="number" id="qty" inputmode="numeric" pattern="[0-9]*" placeholder="0"/>
       </div>
       <div>
         <label class="label">Cost (MMK)</label>
-        <input type="tel" id="cost" placeholder="0" inputmode="numeric" pattern="[0-9]*"/>
+        <input type="number" id="cost" inputmode="numeric" pattern="[0-9]*" placeholder="0"/>
       </div>
     </div>
 
     <label class="label">Sell price (MMK)</label>
-    <input type="tel" id="price" placeholder="0" inputmode="numeric" pattern="[0-9]*"/>
+    <input type="number" id="price" inputmode="numeric" pattern="[0-9]*" placeholder="0"/>
 
     <button onclick="addItem()">Save ✅</button>
   </div>
@@ -104,7 +104,7 @@
   <div class="pageHead stickyHead">
     <div>
       <h2 id="listTitle">List</h2>
-      <div class="small" id="listHint">Tap Sell / Discount on a card</div>
+      <div class="small" id="listHint">Tap Sell / Discount</div>
     </div>
     <button class="pill" onclick="goHome()">⬅ Home</button>
   </div>
@@ -121,8 +121,8 @@
 <div id="discounts" class="page hidden">
   <div class="pageHead stickyHead">
     <div>
-      <h2>Discount Items</h2>
-      <div class="small">Discount items can be Bags or Clothes</div>
+      <h2>🏷️ Discount Items</h2>
+      <div class="small">Only items with stock are shown</div>
     </div>
     <button class="pill" onclick="goHome()">⬅ Home</button>
   </div>
@@ -133,7 +133,7 @@
   <div class="pageHead stickyHead">
     <div>
       <h2>Profit</h2>
-      <div class="small">See totals + daily breakdown</div>
+      <div class="small">Totals + daily breakdown</div>
     </div>
     <button class="pill" onclick="goHome()">⬅ Home</button>
   </div>
@@ -160,19 +160,39 @@
 
 <button id="fabHome" class="fab" onclick="goHome()" title="Home">🏠</button>
 
+<!-- Qty Modal -->
 <div id="qtyModal" class="modal hidden">
   <div class="modalBox">
     <h3 id="qtyTitle">Select quantity</h3>
-    <div id="qtyExtra" class="hidden">
-      <input type="tel" id="discountPriceInput" placeholder="Discount price per 1 (MMK)" inputmode="numeric" pattern="[0-9]*"/>
+
+    <div id="discountPriceWrap" class="hidden" style="margin-top:10px">
+      <input type="number" id="discountPriceInput" inputmode="numeric" pattern="[0-9]*" placeholder="Discount price per 1 (MMK)"/>
     </div>
+
     <div id="qtyGrid" class="qtyGrid"></div>
+
     <div class="rowBtns">
-      <button class="ghost" onclick="closeQty()">Cancel</button>
+      <button class="ghost" onclick="closeQtyModal()">Cancel</button>
     </div>
   </div>
 </div>
 
-<script src="app.js?v=20260111_6"></script>
+<!-- Edit Modal -->
+<div id="editModal" class="modal hidden">
+  <div class="modalBox">
+    <h3 id="editTitle">Edit</h3>
+    <div style="display:grid;gap:10px;margin-top:10px">
+      <input type="text" id="editName" placeholder="Name (optional)"/>
+      <input type="number" id="editCost" inputmode="numeric" pattern="[0-9]*" placeholder="Cost (MMK)"/>
+      <input type="number" id="editPrice" inputmode="numeric" pattern="[0-9]*" placeholder="Sell / Discount price (MMK)"/>
+    </div>
+    <div class="rowBtns" style="margin-top:12px">
+      <button onclick="saveEdit()">Save ✅</button>
+      <button class="ghost" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=20260111_7b"></script>
 </body>
 </html>

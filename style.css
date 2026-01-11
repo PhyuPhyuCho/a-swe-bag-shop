@@ -8,7 +8,6 @@
   --p3:#ff9ad5;
   --shadow:0 10px 24px rgba(25, 20, 50, .10);
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -21,7 +20,6 @@ body{
   color:var(--ink);
   font-family:"Nunito", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
-
 .hidden{display:none !important;}
 .modal.hidden{display:none !important;}
 
@@ -34,7 +32,6 @@ body{
   background: rgba(247,244,255,.75);
   border-bottom: 1px solid rgba(107,78,255,.15);
 }
-
 .brand{display:flex; gap:10px; align-items:center; cursor:pointer; user-select:none}
 .logo{
   width:42px; height:42px; border-radius:14px;
@@ -50,8 +47,7 @@ body{
   color:var(--p1);
   line-height:1.0;
 }
-.brandSub{font-size:12px; color:var(--muted); font-weight:700}
-
+.brandSub{font-size:12px; color:var(--muted); font-weight:800}
 .iconBtn{
   border:none; border-radius:14px;
   background: rgba(107,78,255,.14);
@@ -60,17 +56,16 @@ body{
 }
 
 .page{max-width:720px; margin:0 auto}
-h1,h2{margin:0; font-family:"Baloo 2", system-ui; color:var(--p1)}
-h2{font-size:22px}
-.small{font-size:12px; color:var(--muted); font-weight:700}
-.tiny{text-align:center;font-size:12px;color:var(--muted);margin-top:14px;font-weight:700}
+h2{margin:0; font-family:"Baloo 2", system-ui; color:var(--p1); font-size:22px}
+.small{font-size:12px; color:var(--muted); font-weight:800}
+.tiny{text-align:center;font-size:12px;color:var(--muted);margin-top:14px;font-weight:800}
 
 .hero{
   background: linear-gradient(135deg, rgba(107,78,255,.18), rgba(255,154,213,.18));
   border:1px solid rgba(107,78,255,.18);
   box-shadow: var(--shadow);
   border-radius:22px;
-  padding:14px 14px;
+  padding:14px;
   margin:8px 0 14px;
 }
 .heroTitle{font-family:"Baloo 2"; font-weight:800; font-size:18px; color:var(--ink)}
@@ -81,7 +76,7 @@ h2{font-size:22px}
   display:flex; flex-direction:column; align-items:flex-start; gap:8px;
   border:none; border-radius:22px;
   background: var(--card);
-  padding:14px 14px;
+  padding:14px;
   box-shadow: var(--shadow);
 }
 .tileIcon{
@@ -116,9 +111,7 @@ h2{font-size:22px}
   box-shadow: var(--shadow);
   padding:14px;
 }
-
-.label{display:block; font-size:12px; font-weight:900; color:var(--muted); margin:6px 0 6px}
-
+.label{display:block; font-size:12px; font-weight:900; color:var(--muted); margin:6px 0}
 input,select{
   width:100%;
   padding:12px 12px;
@@ -129,7 +122,6 @@ input,select{
   outline:none;
 }
 input:focus,select:focus{border-color:rgba(107,78,255,.45); box-shadow:0 0 0 4px rgba(107,78,255,.10)}
-
 .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
 
 button{
@@ -185,7 +177,17 @@ button.ghost{
   color:var(--ink);
 }
 .rowBtns{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
-
+.smallBtn{padding:10px 12px; border-radius:16px; font-weight:900}
+.secondaryBtn{
+  background: rgba(107,78,255,.12) !important;
+  border:1px solid rgba(107,78,255,.18) !important;
+  color: var(--ink) !important;
+}
+.dangerBtn{
+  background: rgba(255, 80, 120, .18) !important;
+  border: 1px solid rgba(255, 80, 120, .30) !important;
+  color:#b0123d !important;
+}
 .discountTag{
   display:inline-block;
   background: rgba(255,154,213,.22);
@@ -197,6 +199,21 @@ button.ghost{
   font-weight:900;
   margin-left:6px;
 }
+
+/* Sold out styling */
+.soldOutCard{opacity:.62}
+.soldOutBadge{
+  display:inline-block;
+  background: rgba(255, 80, 120, .18);
+  border: 1px solid rgba(255, 80, 120, .30);
+  color:#b0123d;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  margin-left:8px;
+}
+.soldOutQty{color: rgba(0,0,0,.35) !important;}
 
 /* Modal */
 .modal{position:fixed; inset:0; background:rgba(18, 10, 40, .40); display:flex; align-items:center; justify-content:center; padding:18px; z-index:80}
@@ -255,40 +272,4 @@ button.ghost{
   font-size:20px;
   z-index:60;
 }
-
-/* Show FAB on list-like pages */
 body.showFab #fabHome{display:flex;}
-
-
-/* Sold out styling */
-.soldOutCard{opacity:.62}
-.soldOutBadge{
-  display:inline-block;
-  background: rgba(255, 80, 120, .18);
-  border: 1px solid rgba(255, 80, 120, .30);
-  color:#b0123d;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:900;
-  margin-left:8px;
-}
-.soldOutQty{color: rgba(0,0,0,.35) !important;}
-
-
-/* Small action buttons */
-.smallBtn{
-  padding:10px 12px;
-  border-radius:16px;
-  font-weight:900;
-}
-.dangerBtn{
-  background: rgba(255, 80, 120, .18) !important;
-  border: 1px solid rgba(255, 80, 120, .30) !important;
-  color:#b0123d !important;
-}
-.secondaryBtn{
-  background: rgba(107,78,255,.12) !important;
-  border:1px solid rgba(107,78,255,.18) !important;
-  color: var(--ink) !important;
-}
