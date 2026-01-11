@@ -274,3 +274,21 @@ body.showFab #fabHome{display:flex;}
   margin-left:8px;
 }
 .soldOutQty{color: rgba(0,0,0,.35) !important;}
+
+
+/* Small action buttons */
+.smallBtn{
+  padding:10px 12px;
+  border-radius:16px;
+  font-weight:900;
+}
+.dangerBtn{
+  background: rgba(255, 80, 120, .18) !important;
+  border: 1px solid rgba(255, 80, 120, .30) !important;
+  color:#b0123d !important;
+}
+.secondaryBtn{
+  background: rgba(107,78,255,.12) !important;
+  border:1px solid rgba(107,78,255,.18) !important;
+  color: var(--ink) !important;
+}

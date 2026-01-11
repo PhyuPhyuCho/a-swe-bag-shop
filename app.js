@@ -1,21 +1,23 @@
-// --- Cache fix: unregister any old service worker (if any) ---
+// --- Cache fix: unregister old service worker (if any) ---
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(()=>{});
 }
 
-// Storage
 let items = JSON.parse(localStorage.getItem("items")||"[]");
 let sales = JSON.parse(localStorage.getItem("sales")||"[]");
+
 let period = "today";
 let currentFilter = "all";
 let currentCategory = "bag";
 
+// ---------- utils ----------
 function saveAll(){
   localStorage.setItem("items", JSON.stringify(items));
   localStorage.setItem("sales", JSON.stringify(sales));
 }
+function fmt(n){ return (Number(n)||0).toLocaleString('en-US'); }
+function nowISO(){ return new Date().toISOString(); }
 
-// FAB + navigation
 function setFab(enabled){
   document.body.classList.toggle('showFab', !!enabled);
 }
@@ -26,39 +28,41 @@ function showPage(id){
 
   const fabPages = ['list','discounts','profit'];
   setFab(fabPages.includes(id));
-
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function goHome(){ showPage('home'); }
 
+// ---------- Navigation ----------
 function openList(cat){
   currentCategory = cat || 'bag';
-  const title = (currentCategory==='clothes') ? 'Clothes List' : 'Bag List';
-  const hint  = (currentCategory==='clothes') ? 'Clothes inventory' : 'Bag inventory';
-  document.getElementById('listTitle').textContent = title;
-  document.getElementById('listHint').textContent  = hint;
+  document.getElementById('listTitle').textContent = (currentCategory==='clothes') ? 'Clothes List' : 'Bag List';
+  document.getElementById('listHint').textContent  = (currentCategory==='clothes') ? 'Clothes inventory' : 'Bag inventory';
   showPage('list');
   renderList('all');
+}
+
+function openDiscounts(){
+  showPage('discounts');
+  renderDiscounts();
 }
 
 function openProfit(){
   showPage('profit');
   renderDashboard();
 }
-function openDiscounts(){
-  showPage('discounts');
-  renderDiscounts();
-}
 
-// Helpers
-function fmt(n){ return (n||0).toLocaleString('en-US'); }
+// ---------- ID helpers ----------
+function nextNormalId(){
+  const ns = items.filter(x=>!x.discounted).map(x=>Number(String(x.id).replace(/\D/g,''))||0);
+  return 'I' + String((Math.max(0,...ns)+1)).padStart(3,'0');
+}
 function nextDiscountId(){
-  const ds=items.filter(x=>x.discounted).map(x=>Number(String(x.id).replace('D',''))||0);
-  return 'D'+String((Math.max(0,...ds)+1)).padStart(3,'0');
+  const ds = items.filter(x=>x.discounted).map(x=>Number(String(x.id).replace(/\D/g,''))||0);
+  return 'D' + String((Math.max(0,...ds)+1)).padStart(3,'0');
 }
 
-// Add item
+// ---------- Add Item ----------
 function addItem(){
   const file = document.getElementById('photo').files[0];
   const category = document.getElementById('category').value || 'bag';
@@ -68,13 +72,11 @@ function addItem(){
   const cost = Number(document.getElementById('cost').value);
   const price= Number(document.getElementById('price').value);
 
-  if(!qty || qty < 0) return alert('Enter quantity');
-  if(!cost && cost !== 0) return alert('Enter cost');
-  if(!price && price !== 0) return alert('Enter sell price');
+  if(!qty || qty<0) return alert('Enter quantity');
+  if(!Number.isFinite(cost)) return alert('Enter cost');
+  if(!Number.isFinite(price)) return alert('Enter sell price');
 
-  const allNormal = items.filter(x=>!x.discounted);
-  const id = 'I' + String(allNormal.length+1).padStart(3,'0');
-
+  const id = nextNormalId();
   if(!name) name = 'Item ' + id;
 
   const commit = (photo)=>{
@@ -84,7 +86,7 @@ function addItem(){
       photo: photo||'',
       discounted:false,
       parentId:null,
-      createdAt:new Date().toISOString()
+      createdAt: nowISO()
     });
     saveAll();
     alert('Saved ✅');
@@ -107,7 +109,155 @@ function addItem(){
   }
 }
 
-// List
+// ---------- Qty Modal ----------
+let pendingAction = null;
+function openQtyModal({title,maxQty,mode,onConfirm}){
+  pendingAction = onConfirm;
+  document.getElementById('qtyTitle').textContent = title;
+
+  const extra = document.getElementById('qtyExtra');
+  const input = document.getElementById('discountPriceInput');
+  extra.classList.toggle('hidden', mode !== 'discount');
+  if(mode === 'discount') {
+    input.value = '';
+    input.setAttribute('inputmode','numeric');
+    input.setAttribute('pattern','[0-9]*');
+    input.setAttribute('type','tel');
+  }
+
+  const grid = document.getElementById('qtyGrid');
+  grid.innerHTML = '';
+
+  const m = Number(maxQty)||0;
+  if(m<=0){
+    grid.innerHTML = '<div class="small" style="padding:8px;text-align:center">No stock</div>';
+  } else {
+    const maxButtons = Math.min(12, m);
+    for(let i=1;i<=maxButtons;i++) {
+      const b=document.createElement('button');
+      b.className='qtyBtn';
+      b.textContent=String(i);
+      b.onclick=()=>confirmQty(i);
+      grid.appendChild(b);
+    }
+    if(m>12){
+      const b=document.createElement('button');
+      b.className='qtyBtn';
+      b.textContent='+';
+      b.onclick=()=>{
+        const q = prompt(`Enter quantity (1-${m})`);
+        if(q===null) return;
+        const n = Number(q);
+        if(!n || n<1 || n>m) return alert('Invalid');
+        confirmQty(n);
+      };
+      grid.appendChild(b);
+    }
+    const all=document.createElement('button');
+    all.className='qtyBtn primary';
+    all.textContent=`All (${m})`;
+    all.onclick=()=>confirmQty('all');
+    grid.appendChild(all);
+  }
+
+  document.getElementById('qtyModal').classList.remove('hidden');
+}
+function closeQty(){
+  document.getElementById('qtyModal').classList.add('hidden');
+  pendingAction = null;
+}
+function confirmQty(qty){
+  let discountPrice = null;
+  const extra = document.getElementById('qtyExtra');
+  if(!extra.classList.contains('hidden')) {
+    discountPrice = Number(document.getElementById('discountPriceInput').value);
+    if(!Number.isFinite(discountPrice)) return alert('Enter discount price');
+  }
+  const cb = pendingAction;
+  closeQty();
+  if(cb) cb({ qty, discountPrice });
+}
+
+// ---------- Edit Modal (reuse qty modal box area) ----------
+let editTargetId=null;
+function openEditItem(id){
+  const it = items.find(x=>x.id===id);
+  if(!it) return;
+
+  editTargetId=id;
+  document.getElementById('qtyTitle').textContent = `Edit ${it.id}`;
+  const extra = document.getElementById('qtyExtra');
+  extra.classList.remove('hidden');
+  extra.innerHTML = `
+    <div style="display:grid;gap:10px">
+      <input type="text" id="editName" placeholder="Name (optional)" value="${(it.name||'').replace(/"/g,'&quot;')}">
+      <input type="tel" id="editCost" placeholder="Cost (MMK)" inputmode="numeric" pattern="[0-9]*" value="${it.cost}">
+      <input type="tel" id="editPrice" placeholder="${it.discounted?'Discount price':'Sell price'} (MMK)" inputmode="numeric" pattern="[0-9]*" value="${it.price}">
+    </div>
+    <div class="rowBtns" style="margin-top:12px">
+      <button onclick="saveEditItem()" class="smallBtn">Save</button>
+      <button onclick="closeEdit()" class="smallBtn secondaryBtn">Cancel</button>
+    </div>
+  `;
+  document.getElementById('qtyGrid').innerHTML = '';
+  const rb = document.querySelector('#qtyModal .rowBtns');
+  if(rb) rb.style.display='none';
+  document.getElementById('qtyModal').classList.remove('hidden');
+}
+function closeEdit(){
+  const extra = document.getElementById('qtyExtra');
+  extra.classList.add('hidden');
+  extra.innerHTML = '<input type="tel" id="discountPriceInput" placeholder="Discount price per 1 (MMK)" inputmode="numeric" pattern="[0-9]*"/>';
+  const rb = document.querySelector('#qtyModal .rowBtns');
+  if(rb) rb.style.display='';
+  editTargetId=null;
+  closeQty();
+}
+function saveEditItem(){
+  const it = items.find(x=>x.id===editTargetId);
+  if(!it) return closeEdit();
+
+  const name = (document.getElementById('editName').value||'').trim();
+  const cost = Number(document.getElementById('editCost').value);
+  const price= Number(document.getElementById('editPrice').value);
+
+  if(!Number.isFinite(cost)) return alert('Enter cost');
+  if(!Number.isFinite(price)) return alert('Enter price');
+
+  it.name = name || it.name;
+  it.cost = cost;
+  it.price= price;
+
+  saveAll();
+  alert('Updated ✅');
+  closeEdit();
+
+  if(!it.discounted) renderList(currentFilter);
+  else renderDiscounts();
+  renderDashboard();
+}
+
+// ---------- Delete ----------
+function deleteItem(id){
+  const it = items.find(x=>x.id===id);
+  if(!it) return;
+
+  if(!confirm(`Delete ${it.id}?`)) return;
+
+  items = items.filter(x=>x.id!==id);
+  if(!it.discounted){
+    items = items.filter(x=>!(x.discounted && x.parentId===it.id));
+  }
+
+  saveAll();
+  alert('Deleted ✅');
+
+  renderList(currentFilter);
+  renderDiscounts();
+  renderDashboard();
+}
+
+// ---------- List Rendering ----------
 function renderList(filter){
   currentFilter = filter || 'all';
   const wrap = document.getElementById('itemList');
@@ -128,8 +278,9 @@ function renderList(filter){
   }
 
   normal.forEach(it=>{
-    const unitProfit = it.price - it.cost;
+    const unitProfit = (it.price - it.cost);
     const isSoldOut = (Number(it.qty)||0) <= 0;
+
     wrap.innerHTML += `
       <div class="itemCard ${isSoldOut?'soldOutCard':''}">
         ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:rgba(107,78,255,.12)"></div>`}
@@ -141,13 +292,19 @@ function renderList(filter){
             </div>
             <div class="qtyBig ${isSoldOut?'soldOutQty':''}">${fmt(it.qty)}</div>
           </div>
+
           <div style="margin-top:6px" class="small">
             Unit Cost: <b>${fmt(it.cost)}</b> • Unit Sell: <b>${fmt(it.price)}</b><br>
             <span style="color:${unitProfit>=0?'green':'red'};font-weight:900">Unit Profit: ${fmt(unitProfit)}</span>
           </div>
+
           <div class="rowBtns">
-            <button onclick="sellNormal('${it.id}')">Sell</button>
-            <button class="ghost" onclick="discountSplit('${it.id}')">Discount</button>
+            ${isSoldOut ? '' : `
+              <button onclick="sellNormal('${it.id}')">Sell</button>
+              <button class="ghost" onclick="discountSplit('${it.id}')">Discount</button>
+            `}
+            <button class="secondaryBtn smallBtn" onclick="openEditItem('${it.id}')">Edit</button>
+            <button class="dangerBtn smallBtn" onclick="deleteItem('${it.id}')">Delete</button>
           </div>
         </div>
       </div>
@@ -155,143 +312,7 @@ function renderList(filter){
   });
 }
 
-// Qty modal
-let pendingAction=null;
-
-function openQtyModal({title,maxQty,mode,onConfirm}){
-  pendingAction = onConfirm;
-  document.getElementById('qtyTitle').textContent = title;
-
-  const extra = document.getElementById('qtyExtra');
-  extra.classList.toggle('hidden', mode !== 'discount');
-  if(mode === 'discount') document.getElementById('discountPriceInput').value = '';
-
-  const grid = document.getElementById('qtyGrid');
-  grid.innerHTML = '';
-
-  const m = Number(maxQty) || 0;
-  if(m <= 0){
-    grid.innerHTML = '<div class="small" style="padding:8px;text-align:center">No stock</div>';
-  } else {
-    const maxButtons = Math.min(12, m);
-    for(let i=1;i<=maxButtons;i++){
-      const b=document.createElement('button');
-      b.className='qtyBtn';
-      b.textContent=i;
-      b.onclick=()=>confirmQty(i);
-      grid.appendChild(b);
-    }
-    if(m > 12){
-      const b=document.createElement('button');
-      b.className='qtyBtn';
-      b.textContent='+';
-      b.onclick=()=>{
-        const q=prompt(`Enter quantity (1-${m})`);
-        if(q===null) return;
-        const n=Number(q);
-        if(!n || n<1 || n>m) return alert('Invalid');
-        confirmQty(n);
-      };
-      grid.appendChild(b);
-    }
-    const all=document.createElement('button');
-    all.className='qtyBtn primary';
-    all.textContent=`All (${m})`;
-    all.onclick=()=>confirmQty('all');
-    grid.appendChild(all);
-  }
-
-  document.getElementById('qtyModal').classList.remove('hidden');
-}
-
-function closeQty(){
-  document.getElementById('qtyModal').classList.add('hidden');
-  pendingAction = null;
-}
-
-function confirmQty(qty){
-  let discountPrice = null;
-
-  if(!document.getElementById('qtyExtra').classList.contains('hidden')){
-    discountPrice = Number(document.getElementById('discountPriceInput').value);
-    if(!discountPrice && discountPrice !== 0) return alert('Enter discount price');
-  }
-
-  const cb = pendingAction;
-  closeQty();
-  if(cb) cb({ qty, discountPrice });
-}
-
-// Sell / Discount
-function sellNormal(id){
-  const it = items.find(x=>x.id===id && !x.discounted);
-  if(!it || it.qty<=0) return alert('No stock');
-
-  openQtyModal({
-    title:`Sell quantity (In stock: ${it.qty})`,
-    maxQty: it.qty,
-    mode:'sell',
-    onConfirm: ({qty})=>{
-      const q = (qty==='all') ? it.qty : Number(qty);
-      const rev = it.price * q;
-      const prof= (it.price - it.cost) * q;
-
-      it.qty -= q;
-
-      sales.push({
-        ts:new Date().toISOString(),
-        itemId:it.id,
-        itemName:it.name,
-        category:(it.category||'bag'),
-        qty:q,
-        unitPrice:it.price,
-        unitCost:it.cost,
-        totalRevenue:rev,
-        totalProfit:prof,
-        saleType:'normal'
-      });
-
-      saveAll();
-      alert('Sold ✅');
-      renderList(currentFilter);
-      renderDashboard();
-    }
-  });
-}
-
-function discountSplit(id){
-  const it = items.find(x=>x.id===id && !x.discounted);
-  if(!it || it.qty<=0) return alert('No stock');
-
-  openQtyModal({
-    title:`Discount quantity (In stock: ${it.qty})`,
-    maxQty: it.qty,
-    mode:'discount',
-    onConfirm: ({qty,discountPrice})=>{
-      const q = (qty==='all') ? it.qty : Number(qty);
-      it.qty -= q;
-
-      items.push({
-        id: nextDiscountId(),
-        parentId: it.id,
-        name: it.name,
-        category:(it.category||'bag'),
-        qty: q,
-        cost: it.cost,
-        price: discountPrice,
-        photo: it.photo||'',
-        discounted:true,
-        createdAt:new Date().toISOString()
-      });
-
-      saveAll();
-      openDiscounts();
-      renderDashboard();
-    }
-  });
-}
-
-// Discounts
+// ---------- Discount Rendering ----------
 function renderDiscounts(){
   const wrap = document.getElementById('discountList');
   wrap.innerHTML = '';
@@ -315,18 +336,93 @@ function renderDiscounts(){
               <div style="font-weight:900">${catTag} ${it.name}<span class="discountTag">DISCOUNT</span></div>
               <span class="badge">${it.id}</span>
             </div>
-            <div class="qtyBig ${isSoldOut?'soldOutQty':''}">${fmt(it.qty)}</div>
+            <div class="qtyBig">${fmt(it.qty)}</div>
           </div>
+
           <div class="small" style="margin-top:6px">
             Discount: <b>${fmt(it.price)}</b> • Cost: <b>${fmt(it.cost)}</b><br>
             <span style="color:${unitProfit>=0?'green':'red'};font-weight:900">Unit Profit: ${fmt(unitProfit)}</span>
           </div>
+
           <div class="rowBtns">
             <button onclick="sellDiscount('${it.id}')">Sell</button>
+            <button class="secondaryBtn smallBtn" onclick="openEditItem('${it.id}')">Edit</button>
+            <button class="dangerBtn smallBtn" onclick="deleteItem('${it.id}')">Delete</button>
           </div>
         </div>
       </div>
     `;
+  });
+}
+
+// ---------- Sell / Discount Split ----------
+function sellNormal(id){
+  const it = items.find(x=>x.id===id && !x.discounted);
+  if(!it || it.qty<=0) return alert('No stock');
+
+  openQtyModal({
+    title:`Sell quantity (In stock: ${it.qty})`,
+    maxQty: it.qty,
+    mode:'sell',
+    onConfirm: ({qty})=>{
+      const q = (qty==='all') ? it.qty : Number(qty);
+      const rev = it.price * q;
+      const prof= (it.price - it.cost) * q;
+
+      it.qty -= q;
+
+      sales.push({
+        ts: nowISO(),
+        itemId: it.id,
+        itemName: it.name,
+        category: (it.category||'bag'),
+        qty: q,
+        unitPrice: it.price,
+        unitCost: it.cost,
+        totalRevenue: rev,
+        totalProfit: prof,
+        saleType: 'normal'
+      });
+
+      saveAll();
+      alert('Sold ✅');
+      renderList(currentFilter);
+      renderDashboard();
+    }
+  });
+}
+
+function discountSplit(id){
+  const it = items.find(x=>x.id===id && !x.discounted);
+  if(!it || it.qty<=0) return alert('No stock');
+
+  openQtyModal({
+    title:`Discount quantity (In stock: ${it.qty})`,
+    maxQty: it.qty,
+    mode:'discount',
+    onConfirm: ({qty,discountPrice})=>{
+      const q = (qty==='all') ? it.qty : Number(qty);
+      if(!q || q<1 || q>it.qty) return alert('Invalid qty');
+
+      it.qty -= q;
+
+      items.push({
+        id: nextDiscountId(),
+        parentId: it.id,
+        name: it.name,
+        category: (it.category||'bag'),
+        qty: q,
+        cost: it.cost,
+        price: discountPrice,
+        photo: it.photo||'',
+        discounted: true,
+        createdAt: nowISO()
+      });
+
+      saveAll();
+      alert('Discount created ✅');
+      openDiscounts();
+    }
   });
 }
 
@@ -346,16 +442,16 @@ function sellDiscount(id){
       it.qty -= q;
 
       sales.push({
-        ts:new Date().toISOString(),
-        itemId:it.id,
-        itemName:it.name+' (Discount)',
-        category:(it.category||'bag'),
-        qty:q,
-        unitPrice:it.price,
-        unitCost:it.cost,
-        totalRevenue:rev,
-        totalProfit:prof,
-        saleType:'discount'
+        ts: nowISO(),
+        itemId: it.id,
+        itemName: it.name + ' (Discount)',
+        category: (it.category||'bag'),
+        qty: q,
+        unitPrice: it.price,
+        unitCost: it.cost,
+        totalRevenue: rev,
+        totalProfit: prof,
+        saleType: 'discount'
       });
 
       saveAll();
@@ -366,7 +462,7 @@ function sellDiscount(id){
   });
 }
 
-// Profit
+// ---------- Profit ----------
 function sameDay(a,b){return a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
 function sameMonth(a,b){return a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth();}
 function sameYear(a,b){return a.getFullYear()==b.getFullYear();}
@@ -422,7 +518,6 @@ function drawChart(){
   });
 }
 
-// Daily breakdown
 function ymd(d){
   const x=new Date(d);
   const y=x.getFullYear();
