@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20260111_7b"/>
+  <link rel="stylesheet" href="style.css?v=20260111_7c"/>
 </head>
 <body>
 
@@ -60,7 +60,7 @@
     </button>
   </div>
 
-  <div class="tiny">Build: 20260111_7b</div>
+  <div class="tiny">Build: 20260111_7c</div>
 </div>
 
 <div id="add" class="page hidden">
@@ -85,16 +85,16 @@
     <div class="row2">
       <div>
         <label class="label">Quantity</label>
-        <input type="number" id="qty" inputmode="numeric" pattern="[0-9]*" placeholder="0"/>
+        <input  id="qty" inputmode="numeric" pattern="[0-9]*" placeholder="0"/ type="tel">
       </div>
       <div>
         <label class="label">Cost (MMK)</label>
-        <input type="number" id="cost" inputmode="numeric" pattern="[0-9]*" placeholder="0"/>
+        <input  id="cost" inputmode="numeric" pattern="[0-9]*" placeholder="0"/ type="tel">
       </div>
     </div>
 
     <label class="label">Sell price (MMK)</label>
-    <input type="number" id="price" inputmode="numeric" pattern="[0-9]*" placeholder="0"/>
+    <input  id="price" inputmode="numeric" pattern="[0-9]*" placeholder="0"/ type="tel">
 
     <button onclick="addItem()">Save ✅</button>
   </div>
@@ -166,7 +166,7 @@
     <h3 id="qtyTitle">Select quantity</h3>
 
     <div id="discountPriceWrap" class="hidden" style="margin-top:10px">
-      <input type="number" id="discountPriceInput" inputmode="numeric" pattern="[0-9]*" placeholder="Discount price per 1 (MMK)"/>
+      <input  id="discountPriceInput" inputmode="numeric" pattern="[0-9]*" placeholder="Discount price per 1 (MMK)"/ type="tel">
     </div>
 
     <div id="qtyGrid" class="qtyGrid"></div>
@@ -183,8 +183,8 @@
     <h3 id="editTitle">Edit</h3>
     <div style="display:grid;gap:10px;margin-top:10px">
       <input type="text" id="editName" placeholder="Name (optional)"/>
-      <input type="number" id="editCost" inputmode="numeric" pattern="[0-9]*" placeholder="Cost (MMK)"/>
-      <input type="number" id="editPrice" inputmode="numeric" pattern="[0-9]*" placeholder="Sell / Discount price (MMK)"/>
+      <input  id="editCost" inputmode="numeric" pattern="[0-9]*" placeholder="Cost (MMK)"/ type="tel">
+      <input  id="editPrice" inputmode="numeric" pattern="[0-9]*" placeholder="Sell / Discount price (MMK)"/ type="tel">
     </div>
     <div class="rowBtns" style="margin-top:12px">
       <button onclick="saveEdit()">Save ✅</button>
@@ -193,6 +193,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260111_7b"></script>
+<script src="app.js?v=20260111_7c"></script>
 </body>
 </html>

@@ -189,7 +189,10 @@ function openEdit(id) {
   document.getElementById('editName').value = it.name || '';
   document.getElementById('editCost').value = String(it.cost ?? '');
   document.getElementById('editPrice').value = String(it.price ?? '');
-  document.getElementById('editModal').classList.remove('hidden');
+  
+  const qEl = document.getElementById('editQty');
+  if (qEl) qEl.value = String(it.qty ?? '');
+document.getElementById('editModal').classList.remove('hidden');
 }
 
 function closeEdit() {
@@ -205,14 +208,23 @@ function saveEdit() {
   const cost = Number(document.getElementById('editCost').value);
   const price = Number(document.getElementById('editPrice').value);
 
-  if (!Number.isFinite(cost)) return alert('Enter cost');
+  
+  const qEl = document.getElementById('editQty');
+  const qty = qEl ? Number(qEl.value) : null;
+if (!Number.isFinite(cost)) return alert('Enter cost');
   if (!Number.isFinite(price)) return alert('Enter price');
 
-  if (name) it.name = name;
+  
+  if (qty !== null) {
+    if (!Number.isFinite(qty) || qty < 0) return alert('Enter quantity');
+  }
+if (name) it.name = name;
   it.cost = cost;
   it.price = price;
 
-  saveAll();
+  
+  if (qty !== null) it.qty = Math.floor(qty);
+saveAll();
   alert('Updated ✅');
   closeEdit();
 
