@@ -307,7 +307,7 @@ function renderDiscounts(){
     const catTag = (it.category==='clothes') ? '👗' : '👜';
 
     wrap.innerHTML += `
-      <div class="itemCard ${isSoldOut?'soldOutCard':''}">
+      <div class="itemCard">
         ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:rgba(107,78,255,.12)"></div>`}
         <div class="itemInfo">
           <div class="itemTop">
