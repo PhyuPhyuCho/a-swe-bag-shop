@@ -258,3 +258,19 @@ button.ghost{
 
 /* Show FAB on list-like pages */
 body.showFab #fabHome{display:flex;}
+
+
+/* Sold out styling */
+.soldOutCard{opacity:.62}
+.soldOutBadge{
+  display:inline-block;
+  background: rgba(255, 80, 120, .18);
+  border: 1px solid rgba(255, 80, 120, .30);
+  color:#b0123d;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  margin-left:8px;
+}
+.soldOutQty{color: rgba(0,0,0,.35) !important;}

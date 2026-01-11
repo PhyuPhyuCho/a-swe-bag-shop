@@ -129,16 +129,17 @@ function renderList(filter){
 
   normal.forEach(it=>{
     const unitProfit = it.price - it.cost;
+    const isSoldOut = (Number(it.qty)||0) <= 0;
     wrap.innerHTML += `
-      <div class="itemCard">
+      <div class="itemCard ${isSoldOut?'soldOutCard':''}">
         ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:rgba(107,78,255,.12)"></div>`}
         <div class="itemInfo">
           <div class="itemTop">
             <div>
-              <div style="font-weight:900">${it.name}</div>
+              <div style="font-weight:900">${it.name}${isSoldOut?'<span class="soldOutBadge">SOLD OUT</span>':''}</div>
               <span class="badge">${it.id}</span>
             </div>
-            <div class="qtyBig">${fmt(it.qty)}</div>
+            <div class="qtyBig ${isSoldOut?'soldOutQty':''}">${fmt(it.qty)}</div>
           </div>
           <div style="margin-top:6px" class="small">
             Unit Cost: <b>${fmt(it.cost)}</b> • Unit Sell: <b>${fmt(it.price)}</b><br>
@@ -295,7 +296,7 @@ function renderDiscounts(){
   const wrap = document.getElementById('discountList');
   wrap.innerHTML = '';
 
-  const ds = items.filter(x=>x.discounted);
+  const ds = items.filter(x=>x.discounted && x.qty>0);
   if(!ds.length){
     wrap.innerHTML = '<div class="small" style="text-align:center">No discount items</div>';
     return;
@@ -306,7 +307,7 @@ function renderDiscounts(){
     const catTag = (it.category==='clothes') ? '👗' : '👜';
 
     wrap.innerHTML += `
-      <div class="itemCard">
+      <div class="itemCard ${isSoldOut?'soldOutCard':''}">
         ${it.photo ? `<img src="${it.photo}">` : `<div style="aspect-ratio:1/1;background:rgba(107,78,255,.12)"></div>`}
         <div class="itemInfo">
           <div class="itemTop">
@@ -314,7 +315,7 @@ function renderDiscounts(){
               <div style="font-weight:900">${catTag} ${it.name}<span class="discountTag">DISCOUNT</span></div>
               <span class="badge">${it.id}</span>
             </div>
-            <div class="qtyBig">${fmt(it.qty)}</div>
+            <div class="qtyBig ${isSoldOut?'soldOutQty':''}">${fmt(it.qty)}</div>
           </div>
           <div class="small" style="margin-top:6px">
             Discount: <b>${fmt(it.price)}</b> • Cost: <b>${fmt(it.cost)}</b><br>
